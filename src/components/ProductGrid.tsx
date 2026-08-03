@@ -28,9 +28,18 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 
   let filtered = [...products];
   if (selectedCategorySlug) {
-    const catObj = categories.find((c) => c.slug === selectedCategorySlug);
+    const slugLower = selectedCategorySlug.toLowerCase();
+    const catObj = categories.find(
+      (c) => c.slug.toLowerCase() === slugLower || c.name.toLowerCase() === slugLower || String(c.id) === String(selectedCategorySlug)
+    );
     if (catObj) {
-      filtered = filtered.filter((p) => p.category_id === catObj.id);
+      filtered = filtered.filter(
+        (p) => Number(p.category_id) === Number(catObj.id) || p.category_name?.toLowerCase() === catObj.name.toLowerCase()
+      );
+    } else {
+      filtered = filtered.filter(
+        (p) => p.slug.toLowerCase() === slugLower || p.category_name?.toLowerCase() === slugLower || String(p.category_id) === String(selectedCategorySlug)
+      );
     }
   }
 
@@ -113,13 +122,16 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             ALL PRODUCTS ({products.length})
           </button>
           {categories.map((cat) => {
-            const count = products.filter((p) => p.category_id === cat.id).length;
+            const count = products.filter(
+              (p) => Number(p.category_id) === Number(cat.id) || p.category_name?.toLowerCase() === cat.name.toLowerCase()
+            ).length;
+            const isSelected = selectedCategorySlug === cat.slug || selectedCategorySlug?.toLowerCase() === cat.slug.toLowerCase();
             return (
               <button
                 key={cat.id}
                 onClick={() => onSelectCategory(cat.slug)}
                 className={`px-3 py-1.5 sm:px-4 sm:py-2 font-mono text-[10px] sm:text-xs uppercase tracking-wider transition-all border ${
-                  selectedCategorySlug === cat.slug
+                  isSelected
                     ? isDark
                       ? 'bg-white text-black border-white font-black'
                       : 'bg-black text-white border-black font-black'

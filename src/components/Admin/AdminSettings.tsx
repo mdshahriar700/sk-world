@@ -10,6 +10,7 @@ interface AdminSettingsProps {
 
 export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefresh }) => {
   const [formData, setFormData] = useState<Record<string, string>>({
+    site_logo_url: settings.site_logo_url || '',
     logo_text: settings.logo_text || 'SK WORLD',
     top_announcement_enabled: settings.top_announcement_enabled || 'true',
     top_announcement_text:
@@ -173,6 +174,43 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
                 <option value="true">Enabled (Show Bar)</option>
                 <option value="false">Disabled (Hide Bar)</option>
               </select>
+            </div>
+          </div>
+
+          {/* Website Logo & Favicon Upload */}
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+            <div>
+              <label className="block font-semibold text-slate-800 text-xs mb-0.5">Website Logo & Tab Favicon</label>
+              <p className="text-[11px] text-slate-500 mb-2">Upload your store logo. It will display in the header navbar and as the browser tab favicon.</p>
+            </div>
+
+            {formData.site_logo_url && (
+              <div className="flex items-center space-x-3 p-2 bg-white rounded-xl border border-slate-200 w-fit">
+                <img src={formData.site_logo_url} alt="Logo preview" className="w-10 h-10 object-contain rounded-lg border border-slate-100" />
+                <span className="text-xs font-mono text-slate-600 truncate max-w-xs">{formData.site_logo_url}</span>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <label className="cursor-pointer bg-white hover:bg-slate-100 text-slate-800 font-semibold px-3.5 py-2 rounded-xl border border-slate-200 inline-flex items-center justify-center space-x-2 text-xs">
+                <Upload size={14} />
+                <span>{uploadingField === 'site_logo_url' ? 'Uploading Logo...' : 'Upload Logo Image'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileUpload('site_logo_url', e)}
+                  className="hidden"
+                  disabled={uploadingField === 'site_logo_url'}
+                />
+              </label>
+
+              <input
+                type="text"
+                value={formData.site_logo_url || ''}
+                onChange={(e) => handleChange('site_logo_url', e.target.value)}
+                placeholder="Or paste direct image URL (e.g. https://.../logo.png)"
+                className="flex-1 bg-white border border-slate-200 px-3 py-2 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-[#16A34A]"
+              />
             </div>
           </div>
 

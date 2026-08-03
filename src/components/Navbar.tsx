@@ -66,13 +66,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => onSelectCategory(null)}
             className="flex items-center space-x-2 sm:space-x-3 group text-left"
           >
-            <div className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center font-extrabold font-mono text-base sm:text-lg border transition-colors ${
-              isDark
-                ? 'bg-white text-black border-white group-hover:bg-zinc-200'
-                : 'bg-black text-white border-black group-hover:bg-zinc-800'
-            }`}>
-              SK
-            </div>
+            {settings.site_logo_url ? (
+              <img
+                src={settings.site_logo_url}
+                alt="Brand Logo"
+                className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-lg"
+              />
+            ) : (
+              <div className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center font-extrabold font-mono text-base sm:text-lg border transition-colors ${
+                isDark
+                  ? 'bg-white text-black border-white group-hover:bg-zinc-200'
+                  : 'bg-black text-white border-black group-hover:bg-zinc-800'
+              }`}>
+                SK
+              </div>
+            )}
             <div className="flex flex-col">
               <span className="font-extrabold text-xl sm:text-2xl tracking-tighter uppercase font-syne leading-none">
                 {logoText}

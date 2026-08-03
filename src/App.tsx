@@ -102,6 +102,27 @@ function MainStoreContent() {
     fetchData();
   }, []);
 
+  // Dynamic Favicon effect
+  useEffect(() => {
+    if (settings.site_logo_url) {
+      let link = document.querySelector<HTMLLinkElement>("link[rel*='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'shortcut icon';
+        document.getElementsByTagName('head')[0].appendChild(link);
+      }
+      link.href = settings.site_logo_url;
+    }
+  }, [settings.site_logo_url]);
+
+  const handleSelectCategoryAndScroll = (slug: string | null) => {
+    setActiveCategorySlug(slug);
+    const el = document.getElementById('newest-products-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const trendingProducts = products.filter((p) => p.is_trending);
 
   if (loading) {
@@ -175,7 +196,7 @@ function MainStoreContent() {
         categories={categories}
         settings={settings}
         activeCategory={activeCategorySlug}
-        onSelectCategory={setActiveCategorySlug}
+        onSelectCategory={handleSelectCategoryAndScroll}
         onOpenAdmin={handleOpenAdmin}
         onOpenSearch={() => setIsSearchOpen(true)}
       />
@@ -184,26 +205,14 @@ function MainStoreContent() {
       <Hero
         settings={settings}
         categories={categories}
-        onSelectCategory={(slug) => {
-          setActiveCategorySlug(slug);
-          const el = document.getElementById('newest-products-section');
-          el?.scrollIntoView({ behavior: 'smooth' });
-        }}
-        onExploreClick={() => {
-          setActiveCategorySlug(null);
-          const el = document.getElementById('newest-products-section');
-          el?.scrollIntoView({ behavior: 'smooth' });
-        }}
+        onSelectCategory={handleSelectCategoryAndScroll}
+        onExploreClick={() => handleSelectCategoryAndScroll(null)}
       />
 
       {/* Category Quick Nav Index */}
       <CategoryQuickNav
         categories={categories}
-        onSelectCategory={(slug) => {
-          setActiveCategorySlug(slug);
-          const el = document.getElementById('newest-products-section');
-          el?.scrollIntoView({ behavior: 'smooth' });
-        }}
+        onSelectCategory={handleSelectCategoryAndScroll}
       />
 
       {/* Ticker Marquee */}
