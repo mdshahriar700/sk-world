@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import { Mail, CheckCircle, AlertCircle } from 'lucide-react';
 import { SiteSettings } from '../types';
+import { useTheme } from '../context/ThemeContext';
 
 interface NewsletterProps {
   settings: Partial<SiteSettings>;
 }
 
 export const Newsletter: React.FC<NewsletterProps> = ({ settings }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; isError?: boolean } | null>(null);
 
-  const heading = settings.newsletter_heading || 'JOIN THE SK WORL INSIDERS CLUB';
+  const heading = settings.newsletter_heading || 'JOIN THE SK WORL BANGLADESH INSIDERS';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,19 +47,23 @@ export const Newsletter: React.FC<NewsletterProps> = ({ settings }) => {
   };
 
   return (
-    <section className="bg-zinc-950 text-white py-20 px-4 sm:px-6 lg:px-8 border-b border-white/10">
-      <div className="max-w-4xl mx-auto text-center space-y-6">
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-400 block font-bold">
+    <section className={`py-16 sm:py-20 px-4 sm:px-6 lg:px-8 border-b transition-colors ${
+      isDark ? 'bg-zinc-950 text-white border-white/10' : 'bg-stone-100 text-zinc-900 border-zinc-200'
+    }`}>
+      <div className="max-w-4xl mx-auto text-center space-y-5">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 block font-bold">
           07 / PRIVATE DISPATCH MEMBERSHIP
         </span>
-        <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-white font-syne tracking-tighter">
+        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black uppercase font-syne tracking-tight">
           {heading}
         </h2>
-        <p className="font-mono text-xs sm:text-sm text-zinc-400 uppercase max-w-xl mx-auto tracking-wider">
-          Be the first to receive secret collection drops, private archive sales, and Milano fashion updates.
+        <p className={`font-mono text-xs uppercase max-w-xl mx-auto tracking-wider ${
+          isDark ? 'text-zinc-400' : 'text-zinc-600'
+        }`}>
+          Be the first to receive secret collection drops, private archive sales, and Bangladesh flash updates.
         </p>
 
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-xl mx-auto pt-4">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-xl mx-auto pt-2">
           <div className="relative w-full">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
             <input
@@ -64,7 +71,9 @@ export const Newsletter: React.FC<NewsletterProps> = ({ settings }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ENTER YOUR EMAIL ADDRESS"
-              className="w-full bg-black border border-white/20 text-white text-xs font-mono uppercase pl-11 pr-4 py-4 focus:outline-none focus:border-white placeholder:text-zinc-500 font-bold tracking-wider"
+              className={`w-full border text-xs font-mono uppercase pl-11 pr-4 py-3.5 focus:outline-none font-bold tracking-wider ${
+                isDark ? 'bg-black border-white/20 text-white focus:border-white' : 'bg-white border-zinc-300 text-black focus:border-black'
+              }`}
               required
             />
           </div>
@@ -72,7 +81,9 @@ export const Newsletter: React.FC<NewsletterProps> = ({ settings }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full sm:w-auto bg-white text-black px-9 py-4 font-mono text-xs font-extrabold uppercase tracking-[0.2em] hover:bg-zinc-200 transition-colors whitespace-nowrap disabled:opacity-50 border border-white"
+            className={`w-full sm:w-auto px-8 py-3.5 font-mono text-xs font-black uppercase tracking-widest transition-colors whitespace-nowrap disabled:opacity-50 border ${
+              isDark ? 'bg-white text-black border-white hover:bg-zinc-200' : 'bg-black text-white border-black hover:bg-zinc-800'
+            }`}
           >
             {loading ? 'SUBSCRIBING...' : 'SUBSCRIBE'}
           </button>
@@ -94,3 +105,4 @@ export const Newsletter: React.FC<NewsletterProps> = ({ settings }) => {
     </section>
   );
 };
+

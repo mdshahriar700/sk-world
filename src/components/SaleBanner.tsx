@@ -1,5 +1,6 @@
 import React from 'react';
 import { SiteSettings } from '../types';
+import { useTheme } from '../context/ThemeContext';
 
 interface SaleBannerProps {
   settings: Partial<SiteSettings>;
@@ -7,53 +8,70 @@ interface SaleBannerProps {
 }
 
 export const SaleBanner: React.FC<SaleBannerProps> = ({ settings, onExploreClick }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   const percent = settings.sale_banner_percent || '30';
   const bannerText =
     settings.sale_banner_text ||
-    'SUMMER FLASH SALE — UP TO 30% OFF ON ALL HOODIES & JACKETS WITH FREE EXPRESS SHIPPING';
+    'BANGLADESH FLASH SALE — UP TO 30% OFF ON ALL HOODIES & JACKETS WITH FAST DISPATCH';
 
   return (
-    <section className="bg-zinc-950 text-white py-20 px-4 sm:px-6 lg:px-8 border-y border-white/20 relative overflow-hidden">
+    <section className={`py-16 sm:py-20 px-4 sm:px-6 lg:px-8 border-y relative overflow-hidden transition-colors ${
+      isDark ? 'bg-zinc-950 text-white border-white/20' : 'bg-stone-100 text-zinc-900 border-zinc-300'
+    }`}>
       {/* Background Subtle Watermark */}
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 font-syne font-black text-[220px] text-white/[0.02] pointer-events-none select-none uppercase">
+      <div className={`absolute right-0 top-1/2 -translate-y-1/2 font-syne font-black text-[180px] sm:text-[220px] pointer-events-none select-none uppercase ${
+        isDark ? 'text-white/[0.02]' : 'text-black/[0.03]'
+      }`}>
         SALE
       </div>
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center relative z-10">
         
         {/* Large Percent Graphic */}
         <div className="lg:col-span-4 flex items-center justify-center lg:justify-start">
-          <div className="relative border-2 border-white p-8 text-center bg-black inline-block shadow-2xl">
-            <span className="block font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-400 font-bold mb-2">
+          <div className={`relative border-2 p-6 sm:p-8 text-center inline-block shadow-xl ${
+            isDark ? 'bg-black border-white text-white' : 'bg-white border-black text-black'
+          }`}>
+            <span className="block font-mono text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-2">
               04 / LIMITED PROMOTION
             </span>
-            <span className="font-black text-7xl sm:text-8xl lg:text-9xl tracking-tighter text-white font-syne leading-none block">
+            <span className="font-black text-6xl sm:text-8xl tracking-tight font-syne leading-none block">
               {percent}%
             </span>
-            <span className="block font-mono text-xs uppercase font-extrabold text-white border-t border-white/20 pt-3 mt-3 tracking-[0.2em]">
+            <span className={`block font-mono text-xs uppercase font-extrabold border-t pt-3 mt-3 tracking-widest ${
+              isDark ? 'border-white/20' : 'border-zinc-300'
+            }`}>
               OFF ENTIRE SELECTION
             </span>
           </div>
         </div>
 
         {/* Promo Info */}
-        <div className="lg:col-span-8 space-y-6 text-center lg:text-left">
-          <div className="inline-block bg-white text-black font-mono text-[10px] font-extrabold uppercase tracking-[0.25em] px-3.5 py-1">
-            SPECIAL OFFER
+        <div className="lg:col-span-8 space-y-5 text-center lg:text-left">
+          <div className={`inline-block font-mono text-[10px] font-black uppercase tracking-widest px-3.5 py-1 ${
+            isDark ? 'bg-white text-black' : 'bg-black text-white'
+          }`}>
+            SPECIAL BANGLADESH OFFER
           </div>
 
-          <h3 className="text-3xl sm:text-5xl lg:text-6xl font-black uppercase tracking-tighter leading-none font-syne text-white">
+          <h3 className="text-2xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-tight font-syne">
             {bannerText}
           </h3>
 
-          <p className="text-xs sm:text-sm font-mono text-zinc-400 uppercase max-w-2xl tracking-wider">
-            Discount applied automatically at checkout. Offer valid while stock lasts.
+          <p className={`text-xs font-mono uppercase max-w-2xl tracking-wider ${
+            isDark ? 'text-zinc-400' : 'text-zinc-600'
+          }`}>
+            Discount applied automatically at checkout. Cash on Delivery available across all 64 districts in Bangladesh.
           </p>
 
           <div>
             <button
               onClick={onExploreClick}
-              className="bg-white text-black hover:bg-zinc-200 font-mono text-xs font-extrabold uppercase tracking-[0.2em] px-9 py-4 border border-white transition-colors"
+              className={`font-mono text-xs font-black uppercase tracking-widest px-8 py-3.5 border transition-colors ${
+                isDark ? 'bg-white text-black border-white hover:bg-zinc-200' : 'bg-black text-white border-black hover:bg-zinc-800'
+              }`}
             >
               SHOP SALE COLLECTIONS
             </button>
@@ -64,3 +82,4 @@ export const SaleBanner: React.FC<SaleBannerProps> = ({ settings, onExploreClick
     </section>
   );
 };
+

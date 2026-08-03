@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Search, Menu, X, Shield } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Sun, Moon } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
 import { Category, SiteSettings } from '../types';
+import { useTheme } from '../context/ThemeContext';
 
 interface NavbarProps {
   categories: Category[];
@@ -18,62 +18,76 @@ export const Navbar: React.FC<NavbarProps> = ({
   settings,
   activeCategory,
   onSelectCategory,
-  onOpenAdmin,
   onOpenSearch,
 }) => {
   const { setIsCartOpen, cartCount } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const logoText = settings.logo_text || 'SK WORL';
+  const isDark = theme === 'dark';
 
   return (
-    <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-white/10 transition-all text-white">
-      {/* Top Announcement Bar */}
-      <div className="bg-zinc-950 text-white text-[10px] font-mono tracking-[0.25em] py-2 px-4 text-center border-b border-white/10 uppercase font-bold">
-        <span className="inline-block">
-          SK WORL • MILANO EDITION 2026 • FREE WORLDWIDE EXPRESS SHIPPING ON ORDERS OVER $150
+    <header className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors ${
+      isDark
+        ? 'bg-black/95 border-white/10 text-white'
+        : 'bg-white/95 border-zinc-200 text-zinc-900 shadow-sm'
+    }`}>
+      {/* Top Announcement Bar - BD Focused */}
+      <div className={`text-[10px] font-mono tracking-[0.2em] py-1.5 px-4 text-center border-b uppercase font-bold transition-colors ${
+        isDark ? 'bg-zinc-950 text-zinc-300 border-white/10' : 'bg-stone-100 text-zinc-700 border-zinc-200'
+      }`}>
+        <span className="inline-block truncate">
+          SK WORL • BANGLADESH EDITION 2026 • CASH ON DELIVERY NATIONWIDE • FREE EXPRESS SHIPPING OVER ৳2,500
         </span>
       </div>
 
       {/* Main Navbar Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
         {/* Left Mobile Menu Toggle & Brand Logo */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-white hover:text-zinc-400"
+            className={`md:hidden p-1.5 transition-colors ${
+              isDark ? 'text-white hover:text-zinc-400' : 'text-zinc-800 hover:text-black'
+            }`}
             aria-label="Toggle Menu"
           >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
           <button
             onClick={() => onSelectCategory(null)}
-            className="flex items-center space-x-3 group text-left"
+            className="flex items-center space-x-2 sm:space-x-3 group text-left"
           >
-            <div className="w-9 h-9 bg-white text-black flex items-center justify-center font-extrabold font-mono text-lg border border-white group-hover:bg-zinc-200 transition-colors">
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center font-extrabold font-mono text-base sm:text-lg border transition-colors ${
+              isDark
+                ? 'bg-white text-black border-white group-hover:bg-zinc-200'
+                : 'bg-black text-white border-black group-hover:bg-zinc-800'
+            }`}>
               SK
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-2xl tracking-tighter text-white font-syne uppercase">
+              <span className="font-extrabold text-xl sm:text-2xl tracking-tighter uppercase font-syne leading-none">
                 {logoText}
               </span>
-              <span className="text-[9px] font-mono tracking-[0.3em] text-zinc-400 uppercase -mt-1 font-bold">
-                MILANO EST. 2026
+              <span className={`text-[8px] sm:text-[9px] font-mono tracking-[0.25em] uppercase font-bold mt-0.5 ${
+                isDark ? 'text-zinc-400' : 'text-zinc-500'
+              }`}>
+                BANGLADESH
               </span>
             </div>
           </button>
         </div>
 
         {/* Center Nav Links (Desktop) */}
-        <nav className="hidden md:flex items-center space-x-8 text-xs font-bold tracking-[0.15em] uppercase font-mono">
+        <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 text-xs font-bold tracking-widest uppercase font-mono">
           <button
             onClick={() => onSelectCategory(null)}
             className={`transition-colors py-1 border-b-2 ${
               activeCategory === null
-                ? 'border-white text-white font-black'
-                : 'border-transparent text-zinc-400 hover:text-white hover:border-white/50'
+                ? isDark ? 'border-white text-white font-black' : 'border-black text-black font-black'
+                : isDark ? 'border-transparent text-zinc-400 hover:text-white' : 'border-transparent text-zinc-500 hover:text-black'
             }`}
           >
             ALL COLLECTIONS
@@ -85,8 +99,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onSelectCategory(cat.slug)}
               className={`transition-colors py-1 border-b-2 ${
                 activeCategory === cat.slug
-                  ? 'border-white text-white font-black'
-                  : 'border-transparent text-zinc-400 hover:text-white hover:border-white/50'
+                  ? isDark ? 'border-white text-white font-black' : 'border-black text-black font-black'
+                  : isDark ? 'border-transparent text-zinc-400 hover:text-white' : 'border-transparent text-zinc-500 hover:text-black'
               }`}
             >
               {cat.name}
@@ -95,29 +109,58 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Right Utility Buttons */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Theme Switcher Toggle */}
           <button
-            onClick={onOpenSearch}
-            className="p-2 text-zinc-300 hover:text-white transition-colors border border-white/10 hover:border-white/30"
-            title="Search Products"
+            onClick={toggleTheme}
+            className={`p-1.5 sm:p-2 border transition-all ${
+              isDark
+                ? 'bg-zinc-950 text-amber-400 border-white/20 hover:border-white/50'
+                : 'bg-stone-100 text-zinc-800 border-zinc-300 hover:border-black'
+            }`}
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
-            <Search size={18} />
+            {isDark ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
+          {/* Search Button */}
+          <button
+            onClick={onOpenSearch}
+            className={`p-1.5 sm:p-2 border transition-colors ${
+              isDark
+                ? 'text-zinc-300 hover:text-white border-white/10 hover:border-white/30'
+                : 'text-zinc-700 hover:text-black border-zinc-200 hover:border-zinc-400'
+            }`}
+            title="Search Products"
+          >
+            <Search size={17} />
+          </button>
+
+          {/* Cart Bag Button */}
           <button
             onClick={() => setIsCartOpen(true)}
-            className="relative bg-white text-black hover:bg-zinc-200 transition-colors flex items-center space-x-2 px-3.5 py-2 font-mono text-xs font-extrabold uppercase border border-white"
+            className={`relative transition-colors flex items-center space-x-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 font-mono text-xs font-extrabold uppercase border ${
+              isDark
+                ? 'bg-white text-black hover:bg-zinc-200 border-white'
+                : 'bg-black text-white hover:bg-zinc-800 border-black'
+            }`}
           >
-            <ShoppingBag size={18} />
-            <span>BAG ({cartCount})</span>
+            <ShoppingBag size={16} />
+            <span className="font-mono text-xs font-black">
+              BAG ({cartCount})
+            </span>
           </button>
         </div>
       </div>
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-white/10 bg-zinc-950 px-4 pt-4 pb-6 space-y-3">
-          <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-zinc-500 mb-2 font-bold">
+        <div className={`md:hidden border-t px-4 pt-4 pb-6 space-y-2 animate-in slide-in-from-top-2 duration-200 ${
+          isDark ? 'bg-zinc-950 border-white/10 text-white' : 'bg-stone-50 border-zinc-200 text-zinc-900'
+        }`}>
+          <div className={`text-[9px] font-mono uppercase tracking-widest mb-2 font-bold ${
+            isDark ? 'text-zinc-500' : 'text-zinc-400'
+          }`}>
             01 / NAVIGATION
           </div>
           <button
@@ -125,9 +168,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               onSelectCategory(null);
               setMobileMenuOpen(false);
             }}
-            className={`block w-full text-left py-2 font-syne font-bold text-sm tracking-wider uppercase border-b border-white/10 ${
-              activeCategory === null ? 'text-white' : 'text-zinc-400'
-            }`}
+            className={`block w-full text-left py-2 font-syne font-bold text-sm tracking-wider uppercase border-b ${
+              isDark ? 'border-white/10' : 'border-zinc-200'
+            } ${activeCategory === null ? 'font-black underline' : ''}`}
           >
             All Collections
           </button>
@@ -138,9 +181,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onSelectCategory(cat.slug);
                 setMobileMenuOpen(false);
               }}
-              className={`block w-full text-left py-2 text-sm font-syne tracking-wider uppercase border-b border-white/10 ${
-                activeCategory === cat.slug ? 'text-white font-bold' : 'text-zinc-400'
-              }`}
+              className={`block w-full text-left py-2 text-sm font-syne tracking-wider uppercase border-b ${
+                isDark ? 'border-white/10' : 'border-zinc-200'
+              } ${activeCategory === cat.slug ? 'font-black underline' : ''}`}
             >
               {cat.name}
             </button>
@@ -150,3 +193,4 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
+
