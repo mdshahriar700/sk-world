@@ -66,9 +66,9 @@ export const OfferPopupModal: React.FC<OfferPopupModalProps> = ({ settings, onEx
         
         {/* Header Ribbon */}
         <div className="bg-amber-500 text-black py-2 px-3 text-center font-mono text-[10px] font-black tracking-widest uppercase flex items-center justify-center space-x-2">
-          <Sparkles size={14} className="animate-spin shrink-0" />
+          <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping shrink-0" />
           <span className="truncate">LIMITED TIME PROMOTION</span>
-          <Sparkles size={14} className="animate-spin shrink-0" />
+          <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping shrink-0" />
         </div>
 
         {/* Close Button */}

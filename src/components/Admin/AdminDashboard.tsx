@@ -41,7 +41,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <DollarSign size={18} className="text-white" />
           </div>
           <div className="mt-4">
-            <span className="text-3xl font-black text-white font-mono">${totalRevenue.toFixed(2)}</span>
+            <span className="text-3xl font-black text-white font-mono">৳{totalRevenue.toLocaleString()}</span>
             <span className="block text-[10px] font-mono text-zinc-500 uppercase mt-1 font-bold">Across all recorded orders</span>
           </div>
         </div>
@@ -136,7 +136,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <td className="py-3 px-3 font-bold text-white">#{ord.id}</td>
                     <td className="py-3 px-3 uppercase text-neutral-200">{ord.customer_name}</td>
                     <td className="py-3 px-3 text-neutral-400">{ord.phone}</td>
-                    <td className="py-3 px-3 font-bold text-white">${ord.subtotal.toFixed(2)}</td>
+                    <td className="py-3 px-3 font-bold text-white">৳{ord.subtotal.toLocaleString()}</td>
                     <td className="py-3 px-3">
                       <span
                         className={`inline-block px-2 py-0.5 text-[10px] font-bold uppercase ${

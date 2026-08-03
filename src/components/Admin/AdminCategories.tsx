@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Category } from '../../types';
-import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Upload } from 'lucide-react';
+import { uploadImageToCloudinary } from '../../lib/cloudinary';
 
 interface AdminCategoriesProps {
   categories: Category[];
@@ -11,6 +12,23 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({ categories, on
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [uploading, setUploading] = useState(false);
+
+  const handleCategoryFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const url = await uploadImageToCloudinary(file);
+      setEditingCategory((prev) => prev ? { ...prev, image_url: url } : null);
+    } catch (err) {
+      alert('Failed to upload category image');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleOpenNew = () => {
     setEditingCategory({
@@ -174,7 +192,30 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({ categories, on
               </div>
 
               <div>
-                <label className="block text-neutral-400 uppercase mb-1">IMAGE URL</label>
+                <label className="block text-neutral-400 uppercase mb-1">CATEGORY IMAGE</label>
+                
+                {/* Preview */}
+                {editingCategory.image_url && (
+                  <div className="mb-2 relative w-20 h-24 border border-white/20 bg-black">
+                    <img src={editingCategory.image_url} alt="Category Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="cursor-pointer bg-neutral-800 hover:bg-neutral-700 text-white font-mono text-xs py-2 px-3 border border-white/20 inline-flex items-center space-x-2">
+                    <Upload size={14} />
+                    <span>{uploading ? 'UPLOADING...' : 'CHOOSE FROM DEVICE'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCategoryFileUpload}
+                      className="hidden"
+                      disabled={uploading}
+                    />
+                  </label>
+                  <span className="text-zinc-500 font-mono text-[10px]">OR ENTER URL BELOW</span>
+                </div>
+
                 <input
                   type="text"
                   value={editingCategory.image_url || ''}

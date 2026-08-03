@@ -181,6 +181,12 @@ function MainStoreContent() {
       {/* Hero Section */}
       <Hero
         settings={settings}
+        categories={categories}
+        onSelectCategory={(slug) => {
+          setActiveCategorySlug(slug);
+          const el = document.getElementById('newest-products-section');
+          el?.scrollIntoView({ behavior: 'smooth' });
+        }}
         onExploreClick={() => {
           setActiveCategorySlug(null);
           const el = document.getElementById('newest-products-section');

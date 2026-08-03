@@ -74,7 +74,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ orders, onRefresh }) =
                   <td className="py-3 px-4 text-neutral-300">
                     {Array.isArray(ord.items) ? `${ord.items.length} items` : '1 item'}
                   </td>
-                  <td className="py-3 px-4 font-bold text-white">${ord.subtotal.toFixed(2)}</td>
+                  <td className="py-3 px-4 font-bold text-white">৳{ord.subtotal.toLocaleString()}</td>
                   <td className="py-3 px-4">
                     <select
                       disabled={updatingId === ord.id}
@@ -158,7 +158,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ orders, onRefresh }) =
                       </span>
                     </div>
                     <span className="font-extrabold text-amber-400">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ৳{(item.price * item.quantity).toLocaleString()}
                     </span>
                   </div>
                 ))}
@@ -167,7 +167,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ orders, onRefresh }) =
 
             <div className="flex items-center justify-between font-mono border-t border-white/10 pt-4">
               <span className="text-xs uppercase text-neutral-400">TOTAL ORDER AMOUNT:</span>
-              <span className="text-xl font-extrabold text-white">${selectedOrder.subtotal.toFixed(2)}</span>
+              <span className="text-xl font-extrabold text-white">৳{selectedOrder.subtotal.toLocaleString()}</span>
             </div>
 
           </div>

@@ -1,14 +1,21 @@
 import React from 'react';
-import { ArrowUpRight, Sparkles } from 'lucide-react';
-import { SiteSettings } from '../types';
+import { ArrowUpRight } from 'lucide-react';
+import { Category, SiteSettings } from '../types';
 import { useTheme } from '../context/ThemeContext';
 
 interface HeroProps {
   settings: Partial<SiteSettings>;
+  categories?: Category[];
+  onSelectCategory?: (slug: string | null) => void;
   onExploreClick: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ settings, onExploreClick }) => {
+export const Hero: React.FC<HeroProps> = ({
+  settings,
+  categories = [],
+  onSelectCategory,
+  onExploreClick,
+}) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -34,19 +41,19 @@ export const Hero: React.FC<HeroProps> = ({ settings, onExploreClick }) => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        {/* Mobile View Layout (Clean: Image First, CTA below, no text) */}
-        <div className="block lg:hidden space-y-4">
-          <div className="relative max-w-sm mx-auto">
-            <div className={`relative aspect-[3/4] max-h-[380px] overflow-hidden border-2 shadow-xl ${
+        {/* Mobile View Layout (Centered 16:9 Image, CTA below, then Category shortcuts) */}
+        <div className="block lg:hidden space-y-5 text-center">
+          <div className="relative w-full max-w-sm mx-auto">
+            <div className={`relative aspect-[16/9] overflow-hidden border-2 shadow-xl mx-auto ${
               isDark ? 'bg-zinc-900 border-white/20' : 'bg-stone-200 border-zinc-300'
             }`}>
               <img
                 src={image}
                 alt="SK WORL Fashion Hero"
-                className="w-full h-full object-cover object-top filter contrast-105"
+                className="w-full h-full object-cover object-center filter contrast-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-              <div className={`absolute bottom-3 left-3 right-3 p-3 border backdrop-blur-md flex items-center justify-between ${
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className={`absolute bottom-2.5 left-2.5 right-2.5 p-2 border backdrop-blur-md flex items-center justify-between text-left ${
                 isDark ? 'bg-black/90 border-white/20 text-white' : 'bg-white/95 border-zinc-300 text-zinc-900'
               }`}>
                 <div>
@@ -57,7 +64,7 @@ export const Hero: React.FC<HeroProps> = ({ settings, onExploreClick }) => {
             </div>
           </div>
 
-          <div className="text-center pt-2">
+          <div className="text-center pt-1 space-y-3">
             <button
               onClick={onExploreClick}
               className={`w-full max-w-sm inline-flex items-center justify-center space-x-3 px-8 py-3.5 font-mono text-xs uppercase tracking-widest font-black transition-all border shadow-lg ${
@@ -67,6 +74,24 @@ export const Hero: React.FC<HeroProps> = ({ settings, onExploreClick }) => {
               <span>{ctaText}</span>
               <ArrowUpRight size={18} />
             </button>
+
+            {categories.length > 0 && (
+              <div className="flex flex-wrap justify-center items-center gap-2 max-w-sm mx-auto pt-1">
+                {categories.slice(0, 4).map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => onSelectCategory?.(cat.slug)}
+                    className={`px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border transition-colors ${
+                      isDark
+                        ? 'bg-zinc-900 text-zinc-300 border-white/10 hover:border-white hover:text-white'
+                        : 'bg-stone-100 text-zinc-700 border-zinc-300 hover:border-black hover:text-black'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -78,7 +103,7 @@ export const Hero: React.FC<HeroProps> = ({ settings, onExploreClick }) => {
             <div className={`inline-flex items-center space-x-2.5 px-3 py-1 font-mono text-xs tracking-widest uppercase font-bold border ${
               isDark ? 'bg-zinc-900 border-white/20 text-zinc-300' : 'bg-white border-zinc-300 text-zinc-800'
             }`}>
-              <Sparkles size={14} className="text-amber-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>BANGLADESH DISPATCH • 2026 EDITION</span>
             </div>
 

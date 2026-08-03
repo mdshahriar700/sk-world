@@ -170,7 +170,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, categori
                 <td className="py-3 px-4 text-neutral-300 uppercase">
                   {p.category_name || categories.find((c) => c.id === p.category_id)?.name || 'N/A'}
                 </td>
-                <td className="py-3 px-4 font-bold text-white">${p.price.toFixed(2)}</td>
+                <td className="py-3 px-4 font-bold text-white">৳{p.price.toLocaleString()}</td>
                 <td className="py-3 px-4">
                   <span className={p.stock_quantity <= 0 ? 'text-red-400 font-bold' : 'text-emerald-400'}>
                     {p.stock_quantity} units

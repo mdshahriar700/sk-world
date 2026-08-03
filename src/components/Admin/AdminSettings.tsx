@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SiteSettings } from '../../types';
-import { Save, CheckCircle2 } from 'lucide-react';
+import { Save, CheckCircle2, Upload } from 'lucide-react';
+import { uploadImageToCloudinary } from '../../lib/cloudinary';
 
 interface AdminSettingsProps {
   settings: Partial<SiteSettings>;
@@ -53,6 +54,22 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [uploadingField, setUploadingField] = useState<string | null>(null);
+
+  const handleFileUpload = async (fieldKey: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingField(fieldKey);
+    try {
+      const url = await uploadImageToCloudinary(file);
+      handleChange(fieldKey, url);
+    } catch (err) {
+      alert(`Failed to upload image for ${fieldKey}`);
+    } finally {
+      setUploadingField(null);
+    }
+  };
 
   const handleChange = (key: string, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -153,7 +170,26 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
           </div>
 
           <div>
-            <label className="block text-neutral-400 uppercase mb-1">HERO BACKGROUND IMAGE URL</label>
+            <label className="block text-neutral-400 uppercase mb-1">HERO BACKGROUND IMAGE</label>
+            {formData.hero_image_url && (
+              <div className="mb-2 relative w-32 h-18 border border-white/20 bg-black overflow-hidden">
+                <img src={formData.hero_image_url} alt="Hero Preview" className="w-full h-full object-cover" />
+              </div>
+            )}
+            <div className="flex items-center gap-2 mb-2">
+              <label className="cursor-pointer bg-neutral-800 hover:bg-neutral-700 text-white font-mono text-xs py-2 px-3 border border-white/20 inline-flex items-center space-x-2">
+                <Upload size={14} />
+                <span>{uploadingField === 'hero_image_url' ? 'UPLOADING...' : 'CHOOSE HERO IMAGE FROM DEVICE'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileUpload('hero_image_url', e)}
+                  className="hidden"
+                  disabled={uploadingField === 'hero_image_url'}
+                />
+              </label>
+              <span className="text-zinc-500 font-mono text-[10px]">OR ENTER URL BELOW</span>
+            </div>
             <input
               type="text"
               value={formData.hero_image_url || ''}
@@ -212,12 +248,31 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
                 />
               </div>
               <div>
-                <label className="block text-neutral-400 uppercase mb-1">IMAGE URL</label>
+                <label className="block text-neutral-400 uppercase mb-1">IMAGE</label>
+                {formData.feature1_image && (
+                  <div className="mb-2 relative w-20 h-20 border border-white/20 bg-black overflow-hidden">
+                    <img src={formData.feature1_image} alt="Feature 1" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="flex flex-col gap-1.5 mb-2">
+                  <label className="cursor-pointer bg-neutral-800 hover:bg-neutral-700 text-white font-mono text-[10px] py-1.5 px-2.5 border border-white/20 inline-flex items-center space-x-1.5 self-start">
+                    <Upload size={12} />
+                    <span>{uploadingField === 'feature1_image' ? 'UPLOADING...' : 'UPLOAD IMAGE'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload('feature1_image', e)}
+                      className="hidden"
+                      disabled={uploadingField === 'feature1_image'}
+                    />
+                  </label>
+                </div>
                 <input
                   type="text"
                   value={formData.feature1_image || ''}
                   onChange={(e) => handleChange('feature1_image', e.target.value)}
                   className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
+                  placeholder="HTTPS://..."
                 />
               </div>
             </div>
@@ -246,12 +301,31 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
                 />
               </div>
               <div>
-                <label className="block text-neutral-400 uppercase mb-1">IMAGE URL</label>
+                <label className="block text-neutral-400 uppercase mb-1">IMAGE</label>
+                {formData.feature2_image && (
+                  <div className="mb-2 relative w-20 h-20 border border-white/20 bg-black overflow-hidden">
+                    <img src={formData.feature2_image} alt="Feature 2" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="flex flex-col gap-1.5 mb-2">
+                  <label className="cursor-pointer bg-neutral-800 hover:bg-neutral-700 text-white font-mono text-[10px] py-1.5 px-2.5 border border-white/20 inline-flex items-center space-x-1.5 self-start">
+                    <Upload size={12} />
+                    <span>{uploadingField === 'feature2_image' ? 'UPLOADING...' : 'UPLOAD IMAGE'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload('feature2_image', e)}
+                      className="hidden"
+                      disabled={uploadingField === 'feature2_image'}
+                    />
+                  </label>
+                </div>
                 <input
                   type="text"
                   value={formData.feature2_image || ''}
                   onChange={(e) => handleChange('feature2_image', e.target.value)}
                   className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
+                  placeholder="HTTPS://..."
                 />
               </div>
             </div>

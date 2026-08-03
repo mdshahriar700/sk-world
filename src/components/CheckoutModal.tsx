@@ -198,8 +198,8 @@ export const CheckoutModal: React.FC = () => {
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="E.G. TANVIR AHMED"
-                    className={`w-full border px-3.5 py-2.5 text-xs font-mono uppercase focus:outline-none font-bold ${
+                    placeholder="Enter your full name"
+                    className={`w-full border px-3.5 py-2.5 text-xs font-mono focus:outline-none font-bold ${
                       isDark ? 'bg-black border-white/20 text-white focus:border-white' : 'bg-stone-50 border-zinc-300 text-black focus:border-black'
                     }`}
                     required
@@ -214,8 +214,8 @@ export const CheckoutModal: React.FC = () => {
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="E.G. 01712345678"
-                    className={`w-full border px-3.5 py-2.5 text-xs font-mono uppercase focus:outline-none font-bold ${
+                    placeholder="017XXXXXXXX"
+                    className={`w-full border px-3.5 py-2.5 text-xs font-mono focus:outline-none font-bold ${
                       isDark ? 'bg-black border-white/20 text-white focus:border-white' : 'bg-stone-50 border-zinc-300 text-black focus:border-black'
                     }`}
                     required
@@ -229,9 +229,9 @@ export const CheckoutModal: React.FC = () => {
                   <textarea
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="HOUSE #, ROAD #, BLOCK / SECTOR, AREA, THANA, DISTRICT"
+                    placeholder="House / Road / Area / Thana / District"
                     rows={2}
-                    className={`w-full border px-3.5 py-2.5 text-xs font-mono uppercase focus:outline-none font-bold resize-none ${
+                    className={`w-full border px-3.5 py-2.5 text-xs font-mono focus:outline-none font-bold resize-none ${
                       isDark ? 'bg-black border-white/20 text-white focus:border-white' : 'bg-stone-50 border-zinc-300 text-black focus:border-black'
                     }`}
                     required
