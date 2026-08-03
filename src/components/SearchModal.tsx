@@ -34,7 +34,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, produ
       <div onClick={onClose} className="fixed inset-0 bg-black/80 backdrop-blur-md" />
 
       {/* Box */}
-      <div className={`relative w-full max-w-2xl border-2 shadow-2xl z-10 overflow-hidden transition-colors ${
+      <div className={`relative w-full max-w-[calc(100vw-24px)] sm:max-w-2xl border-2 shadow-2xl z-10 overflow-hidden transition-colors ${
         isDark ? 'bg-zinc-950 text-white border-white/20' : 'bg-white text-zinc-900 border-zinc-300'
       }`}>
         

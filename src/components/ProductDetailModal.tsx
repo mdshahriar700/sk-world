@@ -66,25 +66,25 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className={`relative w-full max-w-4xl border-2 shadow-2xl z-10 overflow-hidden my-4 sm:my-8 transition-colors ${
+          className={`relative w-full max-w-[calc(100vw-24px)] sm:max-w-4xl border-2 shadow-2xl z-10 overflow-hidden my-auto transition-colors ${
             isDark ? 'bg-zinc-950 text-white border-white/20' : 'bg-white text-zinc-900 border-zinc-300'
           }`}
         >
           {/* Close Button */}
           <button
             onClick={onClose}
-            className={`sticky top-3 right-3 sm:absolute sm:top-4 sm:right-4 z-30 p-2 border ml-auto mb-2 sm:mb-0 transition-colors block ${
-              isDark ? 'bg-zinc-900 text-white border-white/30 hover:bg-white hover:text-black' : 'bg-stone-100 text-black border-zinc-400 hover:bg-black hover:text-white'
+            className={`absolute top-2.5 right-2.5 sm:top-4 sm:right-4 z-40 p-2 border transition-colors ${
+              isDark ? 'bg-black/80 text-white border-white/30 hover:bg-white hover:text-black' : 'bg-white/80 text-black border-zinc-400 hover:bg-black hover:text-white'
             }`}
           >
             <X size={18} />
           </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-8 p-4 sm:p-8 max-h-[85vh] overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-8 p-4 sm:p-8 max-h-[82vh] overflow-y-auto overflow-x-hidden">
             
             {/* Left Column: Image Gallery */}
-            <div className="md:col-span-6 space-y-3 sm:space-y-4">
-              <div className={`max-h-[280px] sm:max-h-[420px] aspect-[3/4] border overflow-hidden relative mx-auto ${
+            <div className="md:col-span-6 min-w-0 w-full space-y-3 sm:space-y-4">
+              <div className={`w-full max-w-[280px] sm:max-w-full aspect-[3/4] border overflow-hidden relative mx-auto ${
                 isDark ? 'bg-zinc-900 border-white/20' : 'bg-stone-100 border-zinc-200'
               }`}>
                 <img
@@ -102,12 +102,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
 
               {/* Thumbnails */}
               {images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-1">
+                <div className="flex gap-2 overflow-x-auto pb-1 justify-center sm:justify-start">
                   {images.map((img, idx) => (
                     <button
                       key={idx}
                       onClick={() => setSelectedImageIndex(idx)}
-                      className={`w-14 h-18 sm:w-16 sm:h-20 border overflow-hidden transition-all ${
+                      className={`w-12 h-16 sm:w-16 sm:h-20 border overflow-hidden transition-all shrink-0 ${
                         selectedImageIndex === idx
                           ? isDark ? 'border-2 border-white opacity-100' : 'border-2 border-black opacity-100'
                           : isDark ? 'border-white/20 opacity-50 hover:opacity-100' : 'border-zinc-300 opacity-60 hover:opacity-100'
@@ -121,7 +121,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
             </div>
 
             {/* Right Column: Details & Selection */}
-            <div className="md:col-span-6 space-y-5 flex flex-col justify-between">
+            <div className="md:col-span-6 min-w-0 w-full space-y-5 flex flex-col justify-between">
               <div className="space-y-4">
                 <div>
                   <span className={`font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.25em] block mb-1 font-bold ${
@@ -129,7 +129,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
                   }`}>
                     {product.category_name || 'COLLECTION'}
                   </span>
-                  <h2 className="text-xl sm:text-3xl font-black uppercase font-syne leading-tight tracking-tight">
+                  <h2 className="text-xl sm:text-3xl font-black uppercase font-syne leading-tight tracking-tight break-words">
                     {product.name}
                   </h2>
                   <div className="mt-2 font-mono text-xl sm:text-2xl font-black">

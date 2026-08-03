@@ -60,28 +60,28 @@ export const OfferPopupModal: React.FC<OfferPopupModalProps> = ({ settings, onEx
       <div onClick={handleDismiss} className="fixed inset-0 bg-black/80 backdrop-blur-md" />
 
       {/* Popup Container */}
-      <div className={`relative w-full max-w-md border-2 shadow-2xl z-10 overflow-hidden my-auto transition-all ${
+      <div className={`relative w-full max-w-[calc(100vw-24px)] sm:max-w-md border-2 shadow-2xl z-10 overflow-hidden my-auto mx-auto transition-all ${
         isDark ? 'bg-zinc-950 text-white border-white/30' : 'bg-white text-zinc-900 border-black'
       }`}>
         
         {/* Header Ribbon */}
-        <div className="bg-amber-500 text-black py-2 px-4 text-center font-mono text-[10px] font-black tracking-widest uppercase flex items-center justify-center space-x-2">
-          <Sparkles size={14} className="animate-spin" />
-          <span>LIMITED TIME PROMOTION</span>
-          <Sparkles size={14} className="animate-spin" />
+        <div className="bg-amber-500 text-black py-2 px-3 text-center font-mono text-[10px] font-black tracking-widest uppercase flex items-center justify-center space-x-2">
+          <Sparkles size={14} className="animate-spin shrink-0" />
+          <span className="truncate">LIMITED TIME PROMOTION</span>
+          <Sparkles size={14} className="animate-spin shrink-0" />
         </div>
 
         {/* Close Button */}
         <button
           onClick={handleDismiss}
-          className={`absolute top-3 right-3 z-20 p-1.5 border transition-colors ${
+          className={`absolute top-2.5 right-2.5 z-20 p-1.5 border transition-colors ${
             isDark ? 'bg-black text-white border-white/20 hover:border-white' : 'bg-stone-100 text-black border-zinc-300 hover:border-black'
           }`}
         >
           <X size={18} />
         </button>
 
-        <div className="p-5 sm:p-6 text-center space-y-4">
+        <div className="p-4 sm:p-6 text-center space-y-4">
           
           <div className="w-12 h-12 border-2 border-amber-500 text-amber-500 rounded-full flex items-center justify-center mx-auto bg-amber-500/10">
             <Tag size={24} />
@@ -91,10 +91,10 @@ export const OfferPopupModal: React.FC<OfferPopupModalProps> = ({ settings, onEx
             <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-400 font-bold block">
               OFFICIAL ANNOUNCEMENT
             </span>
-            <h3 className="text-xl sm:text-2xl font-black uppercase font-syne leading-tight">
+            <h3 className="text-lg sm:text-2xl font-black uppercase font-syne leading-tight break-words">
               {title}
             </h3>
-            <p className={`font-mono text-xs leading-relaxed uppercase tracking-wider pt-1 ${
+            <p className={`font-mono text-xs leading-relaxed uppercase tracking-wider pt-1 break-words ${
               isDark ? 'text-zinc-300' : 'text-zinc-600'
             }`}>
               {text}

@@ -86,26 +86,26 @@ export const CheckoutModal: React.FC = () => {
       <div onClick={handleClose} className="fixed inset-0 bg-black/80 backdrop-blur-md" />
 
       {/* Modal Container */}
-      <div className={`relative w-full max-w-2xl border-2 shadow-2xl z-10 overflow-hidden my-4 sm:my-8 transition-colors ${
+      <div className={`relative w-full max-w-[calc(100vw-24px)] sm:max-w-2xl border-2 shadow-2xl z-10 overflow-hidden my-4 sm:my-8 transition-colors ${
         isDark ? 'bg-zinc-950 text-white border-white/20' : 'bg-white text-zinc-900 border-zinc-300'
       }`}>
         
         {/* Header */}
-        <div className={`p-5 flex items-center justify-between border-b ${
+        <div className={`p-4 sm:p-5 flex items-center justify-between border-b ${
           isDark ? 'bg-black text-white border-white/10' : 'bg-stone-50 text-black border-zinc-200'
         }`}>
-          <div className="flex items-center space-x-2">
-            <ShieldCheck size={20} className="text-emerald-500" />
-            <h2 className="font-black text-base uppercase tracking-tight font-syne">
+          <div className="flex items-center space-x-2 min-w-0 pr-2">
+            <ShieldCheck size={20} className="text-emerald-500 shrink-0" />
+            <h2 className="font-black text-sm sm:text-base uppercase tracking-tight font-syne truncate">
               {orderSuccess ? 'ORDER CONFIRMED' : 'CHECKOUT — BANGLADESH DISPATCH'}
             </h2>
           </div>
-          <button onClick={handleClose} className="text-zinc-400 hover:text-black p-1">
+          <button onClick={handleClose} className="text-zinc-400 hover:text-white p-1 shrink-0">
             <X size={20} />
           </button>
         </div>
 
-        <div className="p-4 sm:p-6 max-h-[82vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 max-h-[82vh] overflow-y-auto overflow-x-hidden">
           {orderSuccess ? (
             /* Order Confirmation State */
             <div className="text-center space-y-5 py-4">

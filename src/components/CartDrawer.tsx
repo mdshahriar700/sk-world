@@ -21,12 +21,12 @@ export const CartDrawer: React.FC = () => {
       />
 
       {/* Drawer Container */}
-      <div className={`relative w-full max-w-md h-full shadow-2xl flex flex-col justify-between border-l z-10 transition-colors ${
+      <div className={`relative w-full max-w-[100vw] sm:max-w-md h-full shadow-2xl flex flex-col justify-between border-l z-10 transition-colors ${
         isDark ? 'bg-zinc-950 text-white border-white/20' : 'bg-white text-zinc-900 border-zinc-200'
       }`}>
         
         {/* Header */}
-        <div className={`p-5 flex items-center justify-between border-b ${
+        <div className={`p-4 sm:p-5 flex items-center justify-between border-b ${
           isDark ? 'bg-black text-white border-white/10' : 'bg-stone-50 text-black border-zinc-200'
         }`}>
           <div className="flex items-center space-x-2">
@@ -35,14 +35,14 @@ export const CartDrawer: React.FC = () => {
           </div>
           <button
             onClick={() => setIsCartOpen(false)}
-            className="p-1 text-zinc-400 hover:text-black transition-colors"
+            className="p-1 text-zinc-400 hover:text-white transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Cart Item List */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-3">
           {cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-12">
               <ShoppingBag size={42} className="text-zinc-500" />
