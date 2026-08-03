@@ -53,12 +53,28 @@ export interface Order {
 }
 
 export interface SiteSettings {
+  logo_text: string;
+  top_announcement_enabled?: string;
+  top_announcement_text?: string;
   hero_headline: string;
   hero_subheading: string;
   hero_image_url: string;
   hero_cta_text: string;
+  marquee_enabled?: string;
+  marquee_text?: string;
+  sale_banner_enabled?: string;
+  sale_banner_heading?: string;
   sale_banner_percent: string;
   sale_banner_text: string;
+  sale_banner_cta?: string;
+  feature1_enabled?: string;
+  feature1_heading: string;
+  feature1_text: string;
+  feature1_image: string;
+  feature2_enabled?: string;
+  feature2_heading: string;
+  feature2_text: string;
+  feature2_image: string;
   newsletter_heading: string;
   footer_email: string;
   footer_phone: string;
@@ -66,13 +82,6 @@ export interface SiteSettings {
   social_twitter: string;
   social_facebook: string;
   social_youtube: string;
-  feature1_heading: string;
-  feature1_text: string;
-  feature1_image: string;
-  feature2_heading: string;
-  feature2_text: string;
-  feature2_image: string;
-  logo_text: string;
   offer_popup_enabled?: string;
   offer_popup_title?: string;
   offer_popup_text?: string;

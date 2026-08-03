@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SiteSettings } from '../../types';
-import { Save, CheckCircle2, Upload } from 'lucide-react';
+import { Save, CheckCircle2, Upload, Sliders, ToggleLeft, ToggleRight, Sparkles } from 'lucide-react';
 import { uploadImageToCloudinary } from '../../lib/cloudinary';
 
 interface AdminSettingsProps {
@@ -10,13 +10,11 @@ interface AdminSettingsProps {
 
 export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefresh }) => {
   const [formData, setFormData] = useState<Record<string, string>>({
-    logo_text: settings.logo_text || 'SK WORL',
-    offer_popup_enabled: settings.offer_popup_enabled || 'true',
-    offer_popup_title: settings.offer_popup_title || 'SPECIAL BANGLADESH LAUNCH OFFER ⚡',
-    offer_popup_text:
-      settings.offer_popup_text ||
-      'FLAT 15% EXTRA DISCOUNT ON YOUR FIRST ORDER! CASH ON DELIVERY AVAILABLE ACROSS ALL 64 DISTRICTS IN BANGLADESH.',
-    offer_popup_code: settings.offer_popup_code || 'SKBD15',
+    logo_text: settings.logo_text || 'SK WORLD',
+    top_announcement_enabled: settings.top_announcement_enabled || 'true',
+    top_announcement_text:
+      settings.top_announcement_text ||
+      'SK WORLD • BANGLADESH EDITION 2026 • CASH ON DELIVERY NATIONWIDE • FREE EXPRESS SHIPPING OVER ৳2,500',
     hero_headline: settings.hero_headline || 'YOURSELF INTO THE RIGHT GEAR',
     hero_subheading:
       settings.hero_subheading ||
@@ -25,17 +23,20 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
       settings.hero_image_url ||
       'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&q=80&w=1600',
     hero_cta_text: settings.hero_cta_text || 'VIEW SUMMER COLLECTIONS',
+    marquee_enabled: settings.marquee_enabled || 'true',
+    marquee_text:
+      settings.marquee_text ||
+      'SK WORLD MILANO • ELEVATED STREETWEAR BANGLADESH • CASH ON DELIVERY ALL BD • AUTHENTIC APPAREL 2026 • FAST DISPATCH IN DHAKA',
+    sale_banner_enabled: settings.sale_banner_enabled || 'true',
     sale_banner_percent: settings.sale_banner_percent || '30',
+    sale_banner_heading:
+      settings.sale_banner_heading ||
+      'SUMMER FLASH SALE — UP TO 30% OFF ON ALL HOODIES & JACKETS WITH FREE EXPRESS SHIPPING',
     sale_banner_text:
       settings.sale_banner_text ||
-      'SUMMER FLASH SALE — UP TO 30% OFF ON ALL HOODIES & JACKETS WITH FREE EXPRESS SHIPPING',
-    newsletter_heading: settings.newsletter_heading || 'JOIN THE SK WORL INSIDERS CLUB',
-    footer_email: settings.footer_email || 'contact@skworl.com',
-    footer_phone: settings.footer_phone || '+39 02 8945 1200',
-    social_instagram: settings.social_instagram || 'https://instagram.com',
-    social_twitter: settings.social_twitter || 'https://twitter.com',
-    social_facebook: settings.social_facebook || 'https://facebook.com',
-    social_youtube: settings.social_youtube || 'https://youtube.com',
+      'Discount applied automatically at checkout. Cash on Delivery available across all 64 districts in Bangladesh.',
+    sale_banner_cta: settings.sale_banner_cta || 'SHOP SALE COLLECTIONS',
+    feature1_enabled: settings.feature1_enabled || 'true',
     feature1_heading: settings.feature1_heading || 'PREMIUM MILANO FABRIC',
     feature1_text:
       settings.feature1_text ||
@@ -43,13 +44,27 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
     feature1_image:
       settings.feature1_image ||
       'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1200',
-    feature2_heading: settings.feature2_heading || 'EXPRESS WORLDWIDE SHIPPING',
+    feature2_enabled: settings.feature2_enabled || 'true',
+    feature2_heading: settings.feature2_heading || 'EXPRESS ALL BANGLADESH DISPATCH',
     feature2_text:
       settings.feature2_text ||
-      'Dispatched within 24 hours in zero-plastic eco-friendly luxury packaging.',
+      'Dispatched within 24 hours with Cash on Delivery across Dhaka, Chittagong, Sylhet & all 64 districts.',
     feature2_image:
       settings.feature2_image ||
       'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1200',
+    offer_popup_enabled: settings.offer_popup_enabled || 'true',
+    offer_popup_title: settings.offer_popup_title || 'SPECIAL BANGLADESH LAUNCH OFFER ⚡',
+    offer_popup_text:
+      settings.offer_popup_text ||
+      'FLAT 15% EXTRA DISCOUNT ON YOUR FIRST ORDER! CASH ON DELIVERY AVAILABLE ACROSS ALL 64 DISTRICTS IN BANGLADESH.',
+    offer_popup_code: settings.offer_popup_code || 'SKBD15',
+    newsletter_heading: settings.newsletter_heading || 'JOIN THE SK WORLD INSIDERS CLUB',
+    footer_email: settings.footer_email || 'contact@skworl.com',
+    footer_phone: settings.footer_phone || '+880 1712 345 678',
+    social_instagram: settings.social_instagram || 'https://instagram.com',
+    social_twitter: settings.social_twitter || 'https://twitter.com',
+    social_facebook: settings.social_facebook || 'https://facebook.com',
+    social_youtube: settings.social_youtube || 'https://youtube.com',
   });
 
   const [saving, setSaving] = useState(false);
@@ -102,84 +117,125 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
   };
 
   return (
-    <div className="space-y-8 max-w-4xl">
-      <div>
-        <h2 className="text-3xl font-black uppercase text-white font-sans tracking-tight">
-          HOMEPAGE & SITE CONFIGURATION
-        </h2>
-        <p className="font-mono text-xs uppercase text-neutral-400 mt-1">
-          EDIT HERO TEXT, PROMO BANNERS, FEATURE CARDS & CONTACT INFO LIVE
-        </p>
+    <div className="space-y-6 max-w-5xl">
+      
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Site Configuration</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Dynamically turn storefront sections on/off, edit texts, banners and images.</p>
+        </div>
+
+        <button
+          onClick={handleSubmit}
+          disabled={saving}
+          className="inline-flex items-center space-x-2 bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all disabled:opacity-50"
+        >
+          <Save size={16} />
+          <span>{saving ? 'Saving...' : 'Save All Settings'}</span>
+        </button>
       </div>
 
       {success && (
-        <div className="p-4 bg-emerald-950 border border-emerald-600 text-emerald-200 font-mono text-xs uppercase flex items-center space-x-2">
-          <CheckCircle2 size={18} />
-          <span>SITE SETTINGS UPDATED SUCCESSFULLY! CHANGES ARE LIVE ON THE HOMEPAGE.</span>
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl font-medium text-xs flex items-center space-x-2 shadow-sm">
+          <CheckCircle2 size={18} className="text-[#16A34A]" />
+          <span>Site settings updated successfully! Changes are live on the storefront.</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-8 font-mono text-xs">
+      <form onSubmit={handleSubmit} className="space-y-6 text-xs">
         
-        {/* Brand Header & Hero Settings */}
-        <div className="bg-neutral-900 border border-white/10 p-6 space-y-4">
-          <h3 className="font-bold text-sm uppercase text-amber-400 border-b border-white/10 pb-2">
-            1. BRAND & HERO BANNER SETTINGS
+        {/* 1. Brand & Announcement Bar */}
+        <div className="bg-white rounded-[20px] border border-slate-200 p-5 shadow-sm space-y-4">
+          <h3 className="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3 flex items-center justify-between">
+            <span>1. Brand Header & Announcement Bar</span>
+            <span className="text-xs text-slate-400 font-normal">Header Controls</span>
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-neutral-400 uppercase mb-1">BRAND LOGO TEXT</label>
+              <label className="block font-semibold text-slate-700 mb-1">Brand Logo Text</label>
               <input
                 type="text"
                 value={formData.logo_text || ''}
                 onChange={(e) => handleChange('logo_text', e.target.value)}
-                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase"
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
               />
             </div>
 
             <div>
-              <label className="block text-neutral-400 uppercase mb-1">HERO CTA BUTTON TEXT</label>
+              <label className="block font-semibold text-slate-700 mb-1">Top Announcement Bar Status</label>
+              <select
+                value={formData.top_announcement_enabled || 'true'}
+                onChange={(e) => handleChange('top_announcement_enabled', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
+              >
+                <option value="true">Enabled (Show Bar)</option>
+                <option value="false">Disabled (Hide Bar)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">Top Announcement Message</label>
+            <input
+              type="text"
+              value={formData.top_announcement_text || ''}
+              onChange={(e) => handleChange('top_announcement_text', e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
+            />
+          </div>
+        </div>
+
+        {/* 2. Hero Section Settings */}
+        <div className="bg-white rounded-[20px] border border-slate-200 p-5 shadow-sm space-y-4">
+          <h3 className="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3">
+            2. Hero Banner Settings
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Hero Headline</label>
+              <input
+                type="text"
+                value={formData.hero_headline || ''}
+                onChange={(e) => handleChange('hero_headline', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Hero CTA Button Text</label>
               <input
                 type="text"
                 value={formData.hero_cta_text || ''}
                 onChange={(e) => handleChange('hero_cta_text', e.target.value)}
-                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase"
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-neutral-400 uppercase mb-1">HERO MAIN HEADLINE</label>
-            <input
-              type="text"
-              value={formData.hero_headline || ''}
-              onChange={(e) => handleChange('hero_headline', e.target.value)}
-              className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase"
-            />
-          </div>
-
-          <div>
-            <label className="block text-neutral-400 uppercase mb-1">HERO SUBHEADING TEXT</label>
+            <label className="block font-semibold text-slate-700 mb-1">Hero Subheading</label>
             <textarea
               value={formData.hero_subheading || ''}
               onChange={(e) => handleChange('hero_subheading', e.target.value)}
               rows={2}
-              className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase resize-none"
+              className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
             />
           </div>
 
           <div>
-            <label className="block text-neutral-400 uppercase mb-1">HERO BACKGROUND IMAGE</label>
+            <label className="block font-semibold text-slate-700 mb-1">Hero Background Image</label>
             {formData.hero_image_url && (
-              <div className="mb-2 relative w-32 h-18 border border-white/20 bg-black overflow-hidden">
+              <div className="mb-2 relative w-40 h-24 rounded-xl border border-slate-200 overflow-hidden bg-slate-100">
                 <img src={formData.hero_image_url} alt="Hero Preview" className="w-full h-full object-cover" />
               </div>
             )}
             <div className="flex items-center gap-2 mb-2">
-              <label className="cursor-pointer bg-neutral-800 hover:bg-neutral-700 text-white font-mono text-xs py-2 px-3 border border-white/20 inline-flex items-center space-x-2">
+              <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-3 py-2 rounded-xl border border-slate-200 inline-flex items-center space-x-2">
                 <Upload size={14} />
-                <span>{uploadingField === 'hero_image_url' ? 'UPLOADING...' : 'CHOOSE HERO IMAGE FROM DEVICE'}</span>
+                <span>{uploadingField === 'hero_image_url' ? 'Uploading...' : 'Upload Image from Device'}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -188,76 +244,146 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
                   disabled={uploadingField === 'hero_image_url'}
                 />
               </label>
-              <span className="text-zinc-500 font-mono text-[10px]">OR ENTER URL BELOW</span>
             </div>
             <input
               type="text"
               value={formData.hero_image_url || ''}
               onChange={(e) => handleChange('hero_image_url', e.target.value)}
-              className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
+              className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
+              placeholder="Or enter image URL..."
             />
           </div>
         </div>
 
-        {/* Sale Banner Settings */}
-        <div className="bg-neutral-900 border border-white/10 p-6 space-y-4">
-          <h3 className="font-bold text-sm uppercase text-amber-400 border-b border-white/10 pb-2">
-            2. SALE BANNER SETTINGS
+        {/* 3. Marquee Ticker */}
+        <div className="bg-white rounded-[20px] border border-slate-200 p-5 shadow-sm space-y-4">
+          <h3 className="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3">
+            3. Marquee Ticker Banner
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-neutral-400 uppercase mb-1">DISCOUNT %</label>
-              <input
-                type="text"
-                value={formData.sale_banner_percent || ''}
-                onChange={(e) => handleChange('sale_banner_percent', e.target.value)}
-                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
-              />
+              <label className="block font-semibold text-slate-700 mb-1">Ticker Status</label>
+              <select
+                value={formData.marquee_enabled || 'true'}
+                onChange={(e) => handleChange('marquee_enabled', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
+              >
+                <option value="true">Enabled (Show Ticker)</option>
+                <option value="false">Disabled (Hide Ticker)</option>
+              </select>
             </div>
 
-            <div className="sm:col-span-3">
-              <label className="block text-neutral-400 uppercase mb-1">SALE BANNER TEXT</label>
+            <div className="sm:col-span-2">
+              <label className="block font-semibold text-slate-700 mb-1">Ticker Text (Separate with •)</label>
               <input
                 type="text"
-                value={formData.sale_banner_text || ''}
-                onChange={(e) => handleChange('sale_banner_text', e.target.value)}
-                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase"
+                value={formData.marquee_text || ''}
+                onChange={(e) => handleChange('marquee_text', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
               />
             </div>
           </div>
         </div>
 
-        {/* Feature Section 1 & 2 */}
-        <div className="bg-neutral-900 border border-white/10 p-6 space-y-6">
-          <h3 className="font-bold text-sm uppercase text-amber-400 border-b border-white/10 pb-2">
-            3. EDITABLE FEATURE BLOCKS
+        {/* 4. Sale Promo Banner */}
+        <div className="bg-white rounded-[20px] border border-slate-200 p-5 shadow-sm space-y-4">
+          <h3 className="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3">
+            4. Sale Banner Settings
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Banner Status</label>
+              <select
+                value={formData.sale_banner_enabled || 'true'}
+                onChange={(e) => handleChange('sale_banner_enabled', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
+              >
+                <option value="true">Enabled (Show Banner)</option>
+                <option value="false">Disabled (Hide Banner)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Discount % Badge</label>
+              <input
+                type="text"
+                value={formData.sale_banner_percent || ''}
+                onChange={(e) => handleChange('sale_banner_percent', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A] font-bold"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">CTA Button Text</label>
+              <input
+                type="text"
+                value={formData.sale_banner_cta || ''}
+                onChange={(e) => handleChange('sale_banner_cta', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">Banner Main Heading</label>
+            <input
+              type="text"
+              value={formData.sale_banner_heading || ''}
+              onChange={(e) => handleChange('sale_banner_heading', e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">Banner Description</label>
+            <textarea
+              value={formData.sale_banner_text || ''}
+              onChange={(e) => handleChange('sale_banner_text', e.target.value)}
+              rows={2}
+              className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
+            />
+          </div>
+        </div>
+
+        {/* 5. Feature Blocks */}
+        <div className="bg-white rounded-[20px] border border-slate-200 p-5 shadow-sm space-y-6">
+          <h3 className="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3">
+            5. Homepage Feature Cards
           </h3>
 
           {/* Feature 1 */}
-          <div className="space-y-3 bg-black/40 p-4 border border-white/10">
-            <span className="text-white font-bold uppercase block">FEATURE BLOCK 01</span>
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <span className="font-bold text-slate-900 text-xs">Feature Card 01</span>
+              <select
+                value={formData.feature1_enabled || 'true'}
+                onChange={(e) => handleChange('feature1_enabled', e.target.value)}
+                className="bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-slate-900 text-xs focus:outline-none"
+              >
+                <option value="true">Enabled</option>
+                <option value="false">Disabled</option>
+              </select>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-neutral-400 uppercase mb-1">HEADING</label>
+                <label className="block font-semibold text-slate-600 mb-1">Heading</label>
                 <input
                   type="text"
                   value={formData.feature1_heading || ''}
                   onChange={(e) => handleChange('feature1_heading', e.target.value)}
-                  className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase"
+                  className="w-full bg-white border border-slate-200 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
                 />
               </div>
+
               <div>
-                <label className="block text-neutral-400 uppercase mb-1">IMAGE</label>
-                {formData.feature1_image && (
-                  <div className="mb-2 relative w-20 h-20 border border-white/20 bg-black overflow-hidden">
-                    <img src={formData.feature1_image} alt="Feature 1" className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <div className="flex flex-col gap-1.5 mb-2">
-                  <label className="cursor-pointer bg-neutral-800 hover:bg-neutral-700 text-white font-mono text-[10px] py-1.5 px-2.5 border border-white/20 inline-flex items-center space-x-1.5 self-start">
-                    <Upload size={12} />
-                    <span>{uploadingField === 'feature1_image' ? 'UPLOADING...' : 'UPLOAD IMAGE'}</span>
+                <label className="block font-semibold text-slate-600 mb-1">Image Upload</label>
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer bg-white hover:bg-slate-100 text-slate-800 font-semibold px-3 py-2 rounded-xl border border-slate-200 inline-flex items-center space-x-1.5">
+                    <Upload size={14} />
+                    <span>{uploadingField === 'feature1_image' ? 'Uploading...' : 'Upload Image'}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -267,50 +393,51 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
                     />
                   </label>
                 </div>
-                <input
-                  type="text"
-                  value={formData.feature1_image || ''}
-                  onChange={(e) => handleChange('feature1_image', e.target.value)}
-                  className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
-                  placeholder="HTTPS://..."
-                />
               </div>
             </div>
+
             <div>
-              <label className="block text-neutral-400 uppercase mb-1">DESCRIPTION</label>
+              <label className="block font-semibold text-slate-600 mb-1">Description</label>
               <textarea
                 value={formData.feature1_text || ''}
                 onChange={(e) => handleChange('feature1_text', e.target.value)}
                 rows={2}
-                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase resize-none"
+                className="w-full bg-white border border-slate-200 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
               />
             </div>
           </div>
 
           {/* Feature 2 */}
-          <div className="space-y-3 bg-black/40 p-4 border border-white/10">
-            <span className="text-white font-bold uppercase block">FEATURE BLOCK 02</span>
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <span className="font-bold text-slate-900 text-xs">Feature Card 02</span>
+              <select
+                value={formData.feature2_enabled || 'true'}
+                onChange={(e) => handleChange('feature2_enabled', e.target.value)}
+                className="bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-slate-900 text-xs focus:outline-none"
+              >
+                <option value="true">Enabled</option>
+                <option value="false">Disabled</option>
+              </select>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-neutral-400 uppercase mb-1">HEADING</label>
+                <label className="block font-semibold text-slate-600 mb-1">Heading</label>
                 <input
                   type="text"
                   value={formData.feature2_heading || ''}
                   onChange={(e) => handleChange('feature2_heading', e.target.value)}
-                  className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase"
+                  className="w-full bg-white border border-slate-200 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
                 />
               </div>
+
               <div>
-                <label className="block text-neutral-400 uppercase mb-1">IMAGE</label>
-                {formData.feature2_image && (
-                  <div className="mb-2 relative w-20 h-20 border border-white/20 bg-black overflow-hidden">
-                    <img src={formData.feature2_image} alt="Feature 2" className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <div className="flex flex-col gap-1.5 mb-2">
-                  <label className="cursor-pointer bg-neutral-800 hover:bg-neutral-700 text-white font-mono text-[10px] py-1.5 px-2.5 border border-white/20 inline-flex items-center space-x-1.5 self-start">
-                    <Upload size={12} />
-                    <span>{uploadingField === 'feature2_image' ? 'UPLOADING...' : 'UPLOAD IMAGE'}</span>
+                <label className="block font-semibold text-slate-600 mb-1">Image Upload</label>
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer bg-white hover:bg-slate-100 text-slate-800 font-semibold px-3 py-2 rounded-xl border border-slate-200 inline-flex items-center space-x-1.5">
+                    <Upload size={14} />
+                    <span>{uploadingField === 'feature2_image' ? 'Uploading...' : 'Upload Image'}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -320,139 +447,110 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
                     />
                   </label>
                 </div>
-                <input
-                  type="text"
-                  value={formData.feature2_image || ''}
-                  onChange={(e) => handleChange('feature2_image', e.target.value)}
-                  className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
-                  placeholder="HTTPS://..."
-                />
               </div>
             </div>
+
             <div>
-              <label className="block text-neutral-400 uppercase mb-1">DESCRIPTION</label>
+              <label className="block font-semibold text-slate-600 mb-1">Description</label>
               <textarea
                 value={formData.feature2_text || ''}
                 onChange={(e) => handleChange('feature2_text', e.target.value)}
                 rows={2}
-                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase resize-none"
+                className="w-full bg-white border border-slate-200 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
               />
             </div>
           </div>
         </div>
 
-        {/* Footer Info & Social Links */}
-        <div className="bg-neutral-900 border border-white/10 p-6 space-y-4">
-          <h3 className="font-bold text-sm uppercase text-amber-400 border-b border-white/10 pb-2">
-            4. FOOTER & CONTACT INFORMATION
+        {/* 6. Dynamic Offer Popup */}
+        <div className="bg-white rounded-[20px] border border-slate-200 p-5 shadow-sm space-y-4">
+          <h3 className="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3">
+            6. Offer Popup Modal
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-neutral-400 uppercase mb-1">SUPPORT EMAIL</label>
-              <input
-                type="email"
-                value={formData.footer_email || ''}
-                onChange={(e) => handleChange('footer_email', e.target.value)}
-                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-neutral-400 uppercase mb-1">SUPPORT PHONE</label>
-              <input
-                type="text"
-                value={formData.footer_phone || ''}
-                onChange={(e) => handleChange('footer_phone', e.target.value)}
-                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div>
-              <label className="block text-neutral-400 uppercase mb-1">INSTAGRAM LINK</label>
-              <input
-                type="text"
-                value={formData.social_instagram || ''}
-                onChange={(e) => handleChange('social_instagram', e.target.value)}
-                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-neutral-400 uppercase mb-1">TWITTER / X LINK</label>
-              <input
-                type="text"
-                value={formData.social_twitter || ''}
-                onChange={(e) => handleChange('social_twitter', e.target.value)}
-                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Offer Popup Settings */}
-        <div className="bg-neutral-900 border border-white/10 p-6 space-y-4">
-          <h3 className="font-bold text-sm uppercase text-amber-400 border-b border-white/10 pb-2">
-            5. DYNAMIC OFFER POPUP SETTINGS
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-neutral-400 uppercase mb-1">ENABLE OFFER POPUP</label>
+              <label className="block font-semibold text-slate-700 mb-1">Offer Popup Status</label>
               <select
                 value={formData.offer_popup_enabled || 'true'}
                 onChange={(e) => handleChange('offer_popup_enabled', e.target.value)}
-                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase"
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
               >
-                <option value="true">ENABLED (SHOW POPUP)</option>
-                <option value="false">DISABLED (HIDE POPUP)</option>
+                <option value="true">Enabled (Show Popup)</option>
+                <option value="false">Disabled (Hide Popup)</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-neutral-400 uppercase mb-1">PROMO COUPON CODE</label>
+              <label className="block font-semibold text-slate-700 mb-1">Promo Coupon Code</label>
               <input
                 type="text"
                 value={formData.offer_popup_code || ''}
                 onChange={(e) => handleChange('offer_popup_code', e.target.value)}
-                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase font-bold text-amber-400"
-                placeholder="E.G. SKBD15"
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-[#16A34A] font-bold focus:outline-none focus:border-[#16A34A]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-neutral-400 uppercase mb-1">POPUP TITLE</label>
+            <label className="block font-semibold text-slate-700 mb-1">Popup Title</label>
             <input
               type="text"
               value={formData.offer_popup_title || ''}
               onChange={(e) => handleChange('offer_popup_title', e.target.value)}
-              className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase font-bold"
+              className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
             />
           </div>
 
           <div>
-            <label className="block text-neutral-400 uppercase mb-1">POPUP DESCRIPTION / OFFER DETAILS</label>
+            <label className="block font-semibold text-slate-700 mb-1">Popup Offer Details</label>
             <textarea
               value={formData.offer_popup_text || ''}
               onChange={(e) => handleChange('offer_popup_text', e.target.value)}
               rows={2}
-              className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase resize-none"
+              className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
             />
           </div>
         </div>
 
-        {/* Save CTA */}
+        {/* 7. Footer Contact Settings */}
+        <div className="bg-white rounded-[20px] border border-slate-200 p-5 shadow-sm space-y-4">
+          <h3 className="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3">
+            7. Footer & Contact Information
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Support Email</label>
+              <input
+                type="email"
+                value={formData.footer_email || ''}
+                onChange={(e) => handleChange('footer_email', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Support Phone</label>
+              <input
+                type="text"
+                value={formData.footer_phone || ''}
+                onChange={(e) => handleChange('footer_phone', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Save CTA Button */}
         <div className="pt-2">
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-white text-black py-4 font-mono text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-2 hover:bg-neutral-200 transition-colors disabled:opacity-50"
+            className="w-full bg-[#16A34A] hover:bg-[#15803D] text-white py-3.5 rounded-2xl font-bold text-xs flex items-center justify-center space-x-2 shadow-sm transition-all disabled:opacity-50"
           >
             <Save size={16} />
-            <span>{saving ? 'SAVING CHANGES...' : 'SAVE ALL SITE SETTINGS'}</span>
+            <span>{saving ? 'Saving Changes...' : 'Save All Site Settings'}</span>
           </button>
         </div>
 

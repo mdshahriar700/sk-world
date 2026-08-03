@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Order } from '../../types';
-import { ShoppingBag, Eye, CheckCircle2, Phone, MapPin, User, Calendar } from 'lucide-react';
+import { ShoppingCart, Search, Eye, Filter, CheckCircle2, Truck, XCircle, Clock } from 'lucide-react';
 
 interface AdminOrdersProps {
   orders: Order[];
@@ -8,27 +8,36 @@ interface AdminOrdersProps {
 }
 
 export const AdminOrders: React.FC<AdminOrdersProps> = ({ orders, onRefresh }) => {
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
-  const handleStatusChange = async (orderId: number, newStatus: string) => {
+  const filteredOrders = orders.filter((o) => {
+    const matchesSearch =
+      o.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.phone.includes(searchTerm) ||
+      o.id.toString().includes(searchTerm);
+    const matchesStatus = selectedStatusFilter === 'all' || o.status === selectedStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleUpdateStatus = async (orderId: number, status: Order['status']) => {
     setUpdatingId(orderId);
     try {
-      const res = await fetch(`/api/orders/${orderId}`, {
+      const res = await fetch(`/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status }),
       });
+
       if (res.ok) {
         onRefresh();
-        if (selectedOrder && selectedOrder.id === orderId) {
-          setSelectedOrder({ ...selectedOrder, status: newStatus as any });
-        }
       } else {
         alert('Failed to update status');
       }
     } catch (err) {
-      alert('Network request error');
+      alert('Error updating order status');
     } finally {
       setUpdatingId(null);
     }
@@ -36,138 +45,205 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ orders, onRefresh }) =
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-black uppercase text-white font-sans tracking-tight">
-          ORDER DISPATCH & FULFILLMENT
-        </h2>
-        <p className="font-mono text-xs uppercase text-neutral-400 mt-1">
-          VIEW CUSTOMER DETAILS, ORDERED ITEMS, AND UPDATE DISPATCH STATUS
-        </p>
+      
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Orders Management</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Track customer orders, delivery addresses and dispatch statuses.</p>
+        </div>
       </div>
 
-      {orders.length === 0 ? (
-        <div className="bg-neutral-900 border border-white/10 p-12 text-center font-mono text-xs text-neutral-400 uppercase">
-          NO ORDERS LOGGED IN THE SYSTEM YET
+      {/* Filter and Search Bar */}
+      <div className="bg-white rounded-[20px] border border-slate-200 p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="relative w-full sm:w-80">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by order ID, customer or phone..."
+            className="w-full bg-slate-50 border border-slate-200 pl-10 pr-3 py-2 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#16A34A] focus:bg-white"
+          />
         </div>
-      ) : (
-        <div className="bg-neutral-900 border border-white/10 overflow-x-auto">
-          <table className="w-full text-left font-mono text-xs border-collapse">
+
+        {/* Status Filter Pills */}
+        <div className="flex items-center space-x-1 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+          {['all', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].map((st) => (
+            <button
+              key={st}
+              onClick={() => setSelectedStatusFilter(st)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-xl uppercase transition-all whitespace-nowrap ${
+                selectedStatusFilter === st
+                  ? 'bg-[#16A34A] text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {st}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Orders Table */}
+      <div className="bg-white rounded-[20px] border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-white/10 text-neutral-400 uppercase bg-black/40">
-                <th className="py-3 px-4">ORDER ID</th>
-                <th className="py-3 px-4">CUSTOMER NAME</th>
-                <th className="py-3 px-4">PHONE</th>
-                <th className="py-3 px-4">ADDRESS</th>
-                <th className="py-3 px-4">ITEMS</th>
-                <th className="py-3 px-4">TOTAL</th>
-                <th className="py-3 px-4">STATUS</th>
-                <th className="py-3 px-4 text-right">ACTION</th>
+              <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-semibold uppercase text-[11px] tracking-wider">
+                <th className="py-3.5 px-4">Order ID</th>
+                <th className="py-3.5 px-4">Customer</th>
+                <th className="py-3.5 px-4">Items</th>
+                <th className="py-3.5 px-4">Amount</th>
+                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4">Date</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
-              {orders.map((ord) => (
-                <tr key={ord.id} className="hover:bg-white/5 transition-colors">
-                  <td className="py-3 px-4 font-bold text-white">#{ord.id}</td>
-                  <td className="py-3 px-4 uppercase text-neutral-200 font-bold">{ord.customer_name}</td>
-                  <td className="py-3 px-4 text-neutral-300">{ord.phone}</td>
-                  <td className="py-3 px-4 text-neutral-400 truncate max-w-[200px]">{ord.address}</td>
-                  <td className="py-3 px-4 text-neutral-300">
-                    {Array.isArray(ord.items) ? `${ord.items.length} items` : '1 item'}
-                  </td>
-                  <td className="py-3 px-4 font-bold text-white">৳{ord.subtotal.toLocaleString()}</td>
-                  <td className="py-3 px-4">
-                    <select
-                      disabled={updatingId === ord.id}
-                      value={ord.status}
-                      onChange={(e) => handleStatusChange(ord.id, e.target.value)}
-                      className={`font-mono text-[11px] font-bold uppercase px-2 py-1 bg-black border cursor-pointer focus:outline-none ${
-                        ord.status === 'pending'
-                          ? 'border-amber-500 text-amber-400'
-                          : ord.status === 'confirmed'
-                          ? 'border-blue-500 text-blue-400'
-                          : ord.status === 'shipped'
-                          ? 'border-purple-500 text-purple-400'
-                          : ord.status === 'delivered'
-                          ? 'border-emerald-500 text-emerald-400'
-                          : 'border-red-500 text-red-400'
-                      }`}
-                    >
-                      <option value="pending">PENDING</option>
-                      <option value="confirmed">CONFIRMED</option>
-                      <option value="shipped">SHIPPED</option>
-                      <option value="delivered">DELIVERED</option>
-                      <option value="cancelled">CANCELLED</option>
-                    </select>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button
-                      onClick={() => setSelectedOrder(ord)}
-                      className="p-2 bg-neutral-800 hover:bg-neutral-700 text-white font-mono text-xs flex items-center space-x-1 ml-auto"
-                    >
-                      <Eye size={14} />
-                      <span className="hidden sm:inline">VIEW DETAIL</span>
-                    </button>
+            <tbody className="divide-y divide-slate-100">
+              {filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
+                    No orders match your filter criteria.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredOrders.map((ord) => (
+                  <tr key={ord.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-slate-900">
+                      #{ord.id}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div>
+                        <p className="font-bold text-slate-900">{ord.customer_name}</p>
+                        <p className="text-[11px] text-slate-400">{ord.phone}</p>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center space-x-2">
+                        {ord.items?.[0]?.imageUrl && (
+                          <img
+                            src={ord.items[0].imageUrl}
+                            alt=""
+                            className="w-8 h-8 rounded-md object-cover border border-slate-200"
+                          />
+                        )}
+                        <span className="text-slate-600 font-medium">
+                          {ord.items?.length || 1} item(s)
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 font-extrabold text-slate-900">
+                      ৳{ord.subtotal.toLocaleString()}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <select
+                        value={ord.status}
+                        disabled={updatingId === ord.id}
+                        onChange={(e) => handleUpdateStatus(ord.id, e.target.value as Order['status'])}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-full border focus:outline-none cursor-pointer uppercase ${
+                          ord.status === 'pending'
+                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : ord.status === 'confirmed' || ord.status === 'shipped'
+                            ? 'bg-blue-50 text-blue-800 border-blue-200'
+                            : ord.status === 'delivered'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : 'bg-red-50 text-red-800 border-red-200'
+                        }`}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
+                      {new Date(ord.created_at || Date.now()).toLocaleDateString()}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() => setViewingOrder(ord)}
+                        className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                        title="View Full Order Details"
+                      >
+                        <Eye size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-      )}
+      </div>
 
-      {/* Detail Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-2xl bg-neutral-900 border-2 border-white text-white p-6 sm:p-8 space-y-6">
-            
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+      {/* Order Details Modal */}
+      {viewingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-[24px] max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
-                <span className="font-mono text-xs text-amber-400 uppercase font-bold">DISPATCH DOSSIER</span>
-                <h3 className="text-xl font-bold uppercase font-sans">ORDER #{selectedOrder.id}</h3>
+                <h3 className="font-bold text-slate-900 text-base">Order Details #{viewingOrder.id}</h3>
+                <p className="text-xs text-slate-400">Placed on {new Date(viewingOrder.created_at || Date.now()).toLocaleString()}</p>
               </div>
-              <button onClick={() => setSelectedOrder(null)} className="text-neutral-400 hover:text-white font-mono text-xs">
-                CLOSE [X]
+              <button onClick={() => setViewingOrder(null)} className="text-slate-400 hover:text-slate-600 font-bold text-lg">
+                ×
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-xs bg-black p-4 border border-white/10">
-              <div className="space-y-1">
-                <span className="text-neutral-500 uppercase block">CUSTOMER:</span>
-                <span className="font-bold text-white uppercase">{selectedOrder.customer_name}</span>
+            {/* Customer Information */}
+            <div className="bg-slate-50 p-4 rounded-xl space-y-2 border border-slate-100 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Customer Name:</span>
+                <span className="font-bold text-slate-900">{viewingOrder.customer_name}</span>
               </div>
-              <div className="space-y-1">
-                <span className="text-neutral-500 uppercase block">PHONE CONTACT:</span>
-                <span className="font-bold text-amber-400">{selectedOrder.phone}</span>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Phone Number:</span>
+                <span className="font-bold text-slate-900">{viewingOrder.phone}</span>
               </div>
-              <div className="sm:col-span-2 space-y-1 border-t border-white/10 pt-2">
-                <span className="text-neutral-500 uppercase block">DELIVERY ADDRESS:</span>
-                <span className="text-neutral-200 uppercase">{selectedOrder.address}</span>
+              <div>
+                <span className="text-slate-500 block mb-0.5">Shipping Address:</span>
+                <p className="font-semibold text-slate-800 bg-white p-2.5 rounded-lg border border-slate-200">
+                  {viewingOrder.address}
+                </p>
               </div>
             </div>
 
-            {/* Items Breakdown */}
-            <div className="space-y-3">
-              <h4 className="font-mono text-xs font-bold uppercase text-neutral-400">ORDER ITEMS BREAKDOWN:</h4>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {(selectedOrder.items || []).map((item, idx) => (
-                  <div key={idx} className="bg-black p-3 border border-white/10 flex items-center justify-between font-mono text-xs">
-                    <div>
-                      <span className="font-bold text-white uppercase">{item.productName}</span>
-                      <span className="block text-[10px] text-neutral-400">
-                        SIZE: {item.size} | COLOR: {item.color} | QTY: {item.quantity}
-                      </span>
+            {/* Items List */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-slate-700 block">Ordered Items</span>
+              <div className="divide-y divide-slate-100 border border-slate-100 rounded-xl max-h-48 overflow-y-auto">
+                {viewingOrder.items?.map((item, idx) => (
+                  <div key={idx} className="p-3 flex items-center justify-between text-xs">
+                    <div className="flex items-center space-x-2.5">
+                      {item.imageUrl && <img src={item.imageUrl} alt="" className="w-8 h-8 rounded-md object-cover" />}
+                      <div>
+                        <p className="font-bold text-slate-900">{item.productName}</p>
+                        <p className="text-[10px] text-slate-400">
+                          Size: {item.size} | Color: {item.color} | Qty: {item.quantity}
+                        </p>
+                      </div>
                     </div>
-                    <span className="font-extrabold text-amber-400">
-                      ৳{(item.price * item.quantity).toLocaleString()}
-                    </span>
+                    <span className="font-bold text-slate-900">৳{(item.price * item.quantity).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="flex items-center justify-between font-mono border-t border-white/10 pt-4">
-              <span className="text-xs uppercase text-neutral-400">TOTAL ORDER AMOUNT:</span>
-              <span className="text-xl font-extrabold text-white">৳{selectedOrder.subtotal.toLocaleString()}</span>
+            {/* Total */}
+            <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+              <span className="font-bold text-slate-700 text-sm">Total Payable (Cash on Delivery):</span>
+              <span className="font-black text-[#16A34A] text-lg">৳{viewingOrder.subtotal.toLocaleString()}</span>
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={() => setViewingOrder(null)}
+                className="w-full bg-slate-900 text-white py-2.5 rounded-xl font-semibold text-xs hover:bg-slate-800"
+              >
+                Close Details
+              </button>
             </div>
 
           </div>

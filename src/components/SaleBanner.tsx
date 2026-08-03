@@ -11,10 +11,18 @@ export const SaleBanner: React.FC<SaleBannerProps> = ({ settings, onExploreClick
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
+  if (settings.sale_banner_enabled === 'false') {
+    return null;
+  }
+
   const percent = settings.sale_banner_percent || '30';
+  const headingText =
+    settings.sale_banner_heading ||
+    'SUMMER FLASH SALE — UP TO 30% OFF ON ALL HOODIES & JACKETS WITH FREE EXPRESS SHIPPING';
   const bannerText =
     settings.sale_banner_text ||
-    'BANGLADESH FLASH SALE — UP TO 30% OFF ON ALL HOODIES & JACKETS WITH FAST DISPATCH';
+    'Discount applied automatically at checkout. Cash on Delivery available across all 64 districts in Bangladesh.';
+  const ctaText = settings.sale_banner_cta || 'SHOP SALE COLLECTIONS';
 
   return (
     <section className={`py-16 sm:py-20 px-4 sm:px-6 lg:px-8 border-y relative overflow-hidden transition-colors ${
@@ -57,13 +65,13 @@ export const SaleBanner: React.FC<SaleBannerProps> = ({ settings, onExploreClick
           </div>
 
           <h3 className="text-2xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-tight font-syne">
-            {bannerText}
+            {headingText}
           </h3>
 
           <p className={`text-xs font-mono uppercase max-w-2xl tracking-wider ${
             isDark ? 'text-zinc-400' : 'text-zinc-600'
           }`}>
-            Discount applied automatically at checkout. Cash on Delivery available across all 64 districts in Bangladesh.
+            {bannerText}
           </p>
 
           <div>
@@ -73,7 +81,7 @@ export const SaleBanner: React.FC<SaleBannerProps> = ({ settings, onExploreClick
                 isDark ? 'bg-white text-black border-white hover:bg-zinc-200' : 'bg-black text-white border-black hover:bg-zinc-800'
               }`}
             >
-              SHOP SALE COLLECTIONS
+              {ctaText}
             </button>
           </div>
         </div>

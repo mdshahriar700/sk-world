@@ -26,6 +26,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const logoText = settings.logo_text || 'SK WORL';
   const isDark = theme === 'dark';
+  const topAnnouncementEnabled = settings.top_announcement_enabled !== 'false';
+  const topAnnouncementText =
+    settings.top_announcement_text ||
+    'SK WORL • BANGLADESH EDITION 2026 • CASH ON DELIVERY NATIONWIDE • FREE EXPRESS SHIPPING OVER ৳2,500';
 
   return (
     <header className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors ${
@@ -33,14 +37,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         ? 'bg-black/95 border-white/10 text-white'
         : 'bg-white/95 border-zinc-200 text-zinc-900 shadow-sm'
     }`}>
-      {/* Top Announcement Bar - BD Focused */}
-      <div className={`text-[10px] font-mono tracking-[0.2em] py-1.5 px-4 text-center border-b uppercase font-bold transition-colors ${
-        isDark ? 'bg-zinc-950 text-zinc-300 border-white/10' : 'bg-stone-100 text-zinc-700 border-zinc-200'
-      }`}>
-        <span className="inline-block truncate">
-          SK WORL • BANGLADESH EDITION 2026 • CASH ON DELIVERY NATIONWIDE • FREE EXPRESS SHIPPING OVER ৳2,500
-        </span>
-      </div>
+      {/* Top Announcement Bar */}
+      {topAnnouncementEnabled && (
+        <div className={`text-[10px] font-mono tracking-[0.2em] py-1.5 px-4 text-center border-b uppercase font-bold transition-colors ${
+          isDark ? 'bg-zinc-950 text-zinc-300 border-white/10' : 'bg-stone-100 text-zinc-700 border-zinc-200'
+        }`}>
+          <span className="inline-block truncate">
+            {topAnnouncementText}
+          </span>
+        </div>
+      )}
 
       {/* Main Navbar Container */}
       <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">

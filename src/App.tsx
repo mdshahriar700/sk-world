@@ -30,6 +30,7 @@ import { AdminCategories } from './components/Admin/AdminCategories';
 import { AdminOrders } from './components/Admin/AdminOrders';
 import { AdminSettings } from './components/Admin/AdminSettings';
 import { AdminSubscribers } from './components/Admin/AdminSubscribers';
+import { AdminUsers } from './components/Admin/AdminUsers';
 
 function MainStoreContent() {
   const { isAuthenticated } = useAuth();
@@ -152,6 +153,7 @@ function MainStoreContent() {
         {adminTab === 'orders' && <AdminOrders orders={orders} onRefresh={fetchData} />}
         {adminTab === 'settings' && <AdminSettings settings={settings} onRefresh={fetchData} />}
         {adminTab === 'subscribers' && <AdminSubscribers subscribers={subscribers} />}
+        {adminTab === 'admin-users' && <AdminUsers onRefresh={fetchData} />}
       </AdminLayout>
     );
   }
@@ -205,7 +207,7 @@ function MainStoreContent() {
       />
 
       {/* Ticker Marquee */}
-      <MarqueeBanner />
+      <MarqueeBanner settings={settings} />
 
       {/* Newest Products Section */}
       <div id="newest-products-section">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Category } from '../../types';
-import { Plus, Edit2, Trash2, X, Upload } from 'lucide-react';
+import { Plus, Edit2, Trash2, Upload, X, FolderTree } from 'lucide-react';
 import { uploadImageToCloudinary } from '../../lib/cloudinary';
 
 interface AdminCategoriesProps {
@@ -11,30 +11,14 @@ interface AdminCategoriesProps {
 export const AdminCategories: React.FC<AdminCategoriesProps> = ({ categories, onRefresh }) => {
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-
   const [uploading, setUploading] = useState(false);
-
-  const handleCategoryFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const url = await uploadImageToCloudinary(file);
-      setEditingCategory((prev) => prev ? { ...prev, image_url: url } : null);
-    } catch (err) {
-      alert('Failed to upload category image');
-    } finally {
-      setUploading(false);
-    }
-  };
+  const [loading, setLoading] = useState(false);
 
   const handleOpenNew = () => {
     setEditingCategory({
       name: '',
       slug: '',
-      image_url: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=800',
+      image_url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800',
       sort_order: categories.length + 1,
     });
     setIsModalOpen(true);
@@ -55,15 +39,26 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({ categories, on
     }
   };
 
-  const handleSaveCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingCategory?.name) {
-      alert('Category Name is required.');
-      return;
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const url = await uploadImageToCloudinary(file);
+      setEditingCategory((prev) => ({ ...prev, image_url: url }));
+    } catch (err) {
+      alert('Failed to upload image');
+    } finally {
+      setUploading(false);
     }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCategory?.name) return;
 
     setLoading(true);
-
     try {
       const isEdit = !!editingCategory.id;
       const url = isEdit ? `/api/categories/${editingCategory.id}` : '/api/categories';
@@ -75,16 +70,14 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({ categories, on
         body: JSON.stringify(editingCategory),
       });
 
-      const data = await res.json();
-      if (res.ok && data.success) {
+      if (res.ok) {
         setIsModalOpen(false);
-        setEditingCategory(null);
         onRefresh();
       } else {
-        alert(data.error || 'Failed to save category');
+        alert('Failed to save category');
       }
     } catch (err) {
-      alert('Network request failed');
+      alert('Error saving category');
     } finally {
       setLoading(false);
     }
@@ -92,167 +85,140 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({ categories, on
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black uppercase text-white font-sans tracking-tight">
-            CATEGORY INDEX & REORDER
-          </h2>
-          <p className="font-mono text-xs uppercase text-neutral-400 mt-1">
-            MANAGE CATEGORIES THAT DISPLAY ON THE PUBLIC NAVBAR & QUICK NAV
-          </p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Categories</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Organize catalog collections and homepage groupings.</p>
         </div>
 
         <button
           onClick={handleOpenNew}
-          className="bg-white text-black hover:bg-neutral-200 px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider flex items-center space-x-2 transition-colors"
+          className="inline-flex items-center space-x-2 bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-all"
         >
           <Plus size={16} />
-          <span>ADD CATEGORY</span>
+          <span>Add New Category</span>
         </button>
       </div>
 
-      {/* Categories Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Categories Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {categories.map((cat) => (
           <div
             key={cat.id}
-            className="bg-neutral-900 border border-white/10 p-4 flex flex-col justify-between space-y-4"
+            className="bg-white rounded-[20px] border border-slate-200 shadow-sm p-4 flex items-center justify-between hover:border-slate-300 transition-all"
           >
-            <div className="flex space-x-4 items-center">
+            <div className="flex items-center space-x-3.5">
               <img
-                src={cat.image_url}
+                src={cat.image_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800'}
                 alt={cat.name}
-                className="w-16 h-20 object-cover bg-black border border-white/20"
+                className="w-14 h-14 object-cover rounded-xl border border-slate-200"
               />
               <div>
-                <span className="font-mono text-[10px] text-amber-400 uppercase font-bold">
-                  SORT ORDER: #{cat.sort_order}
-                </span>
-                <h3 className="font-bold text-lg uppercase text-white">{cat.name}</h3>
-                <span className="font-mono text-xs text-neutral-500">{cat.slug}</span>
+                <h3 className="font-bold text-slate-900 text-sm">{cat.name}</h3>
+                <p className="text-[11px] font-mono text-slate-400">/{cat.slug}</p>
+                <span className="text-[10px] text-slate-500">Order: {cat.sort_order}</span>
               </div>
             </div>
 
-            <div className="flex items-center justify-end space-x-2 border-t border-white/10 pt-3">
+            <div className="flex items-center space-x-1">
               <button
                 onClick={() => handleOpenEdit(cat)}
-                className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 font-mono text-xs text-white uppercase flex items-center space-x-1"
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                title="Edit Category"
               >
-                <Edit2 size={12} />
-                <span>EDIT</span>
+                <Edit2 size={16} />
               </button>
               <button
                 onClick={() => handleDelete(cat.id)}
-                className="px-3 py-1.5 bg-red-950 hover:bg-red-900 font-mono text-xs text-red-300 uppercase flex items-center space-x-1"
+                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="Delete Category"
               >
-                <Trash2 size={12} />
-                <span>DELETE</span>
+                <Trash2 size={16} />
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Modal Form */}
+      {/* Edit / Add Modal */}
       {isModalOpen && editingCategory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg bg-neutral-900 border-2 border-white text-white p-6 space-y-6">
-            
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-bold uppercase text-lg">
-                {editingCategory.id ? 'EDIT CATEGORY' : 'ADD CATEGORY'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-[24px] max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+              <h3 className="font-bold text-slate-900 text-base">
+                {editingCategory.id ? 'Edit Category' : 'Create Category'}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-neutral-400 hover:text-white">
-                <X size={20} />
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-lg font-bold">
+                ×
               </button>
             </div>
 
-            <form onSubmit={handleSaveCategory} className="space-y-4 font-mono text-xs">
+            <form onSubmit={handleSave} className="space-y-4 text-xs">
               <div>
-                <label className="block text-neutral-400 uppercase mb-1">CATEGORY NAME *</label>
+                <label className="block font-semibold text-slate-600 mb-1">Category Name *</label>
                 <input
                   type="text"
                   value={editingCategory.name || ''}
                   onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                  placeholder="E.G. HOODIES"
-                  className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase"
+                  placeholder="e.g. Hoodies & Sweats"
                   required
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
                 />
               </div>
 
               <div>
-                <label className="block text-neutral-400 uppercase mb-1">SLUG</label>
+                <label className="block font-semibold text-slate-600 mb-1">Slug</label>
                 <input
                   type="text"
                   value={editingCategory.slug || ''}
                   onChange={(e) => setEditingCategory({ ...editingCategory, slug: e.target.value })}
-                  placeholder="E.G. hoodies"
-                  className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
+                  placeholder="e.g. hoodies-sweats"
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
                 />
               </div>
 
               <div>
-                <label className="block text-neutral-400 uppercase mb-1">CATEGORY IMAGE</label>
-                
-                {/* Preview */}
+                <label className="block font-semibold text-slate-600 mb-1">Image URL or Upload</label>
                 {editingCategory.image_url && (
-                  <div className="mb-2 relative w-20 h-24 border border-white/20 bg-black">
-                    <img src={editingCategory.image_url} alt="Category Preview" className="w-full h-full object-cover" />
-                  </div>
+                  <img
+                    src={editingCategory.image_url}
+                    alt=""
+                    className="w-full h-24 object-cover rounded-xl border border-slate-200 mb-2"
+                  />
                 )}
-
                 <div className="flex items-center gap-2 mb-2">
-                  <label className="cursor-pointer bg-neutral-800 hover:bg-neutral-700 text-white font-mono text-xs py-2 px-3 border border-white/20 inline-flex items-center space-x-2">
+                  <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-3 py-2 rounded-xl border border-slate-200 inline-flex items-center space-x-2">
                     <Upload size={14} />
-                    <span>{uploading ? 'UPLOADING...' : 'CHOOSE FROM DEVICE'}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleCategoryFileUpload}
-                      className="hidden"
-                      disabled={uploading}
-                    />
+                    <span>{uploading ? 'Uploading...' : 'Upload Image'}</span>
+                    <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" disabled={uploading} />
                   </label>
-                  <span className="text-zinc-500 font-mono text-[10px]">OR ENTER URL BELOW</span>
                 </div>
-
                 <input
                   type="text"
                   value={editingCategory.image_url || ''}
                   onChange={(e) => setEditingCategory({ ...editingCategory, image_url: e.target.value })}
-                  placeholder="HTTPS://..."
-                  className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
                 />
               </div>
 
-              <div>
-                <label className="block text-neutral-400 uppercase mb-1">SORT ORDER (DISPLAY PRIORITY)</label>
-                <input
-                  type="number"
-                  value={editingCategory.sort_order ?? 1}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, sort_order: parseInt(e.target.value) })}
-                  className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
-                />
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4 border-t border-white/10">
+              <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-white/20 text-white font-bold uppercase"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
                 >
-                  CANCEL
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-white text-black font-bold uppercase px-6 py-2 hover:bg-neutral-200"
+                  className="px-4 py-2 text-xs font-semibold bg-[#16A34A] hover:bg-[#15803D] text-white rounded-xl shadow-sm"
                 >
-                  {loading ? 'SAVING...' : 'SAVE CATEGORY'}
+                  {loading ? 'Saving...' : 'Save Category'}
                 </button>
               </div>
             </form>
-
           </div>
         </div>
       )}
