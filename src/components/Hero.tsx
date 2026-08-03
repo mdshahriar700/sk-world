@@ -37,18 +37,18 @@ export const Hero: React.FC<HeroProps> = ({ settings, onExploreClick }) => {
           
           {/* Left Hero Content */}
           <div className="lg:col-span-7 space-y-6 sm:space-y-8 pt-2">
-            <div className={`inline-flex items-center space-x-2.5 px-3 py-1 font-mono text-[10px] sm:text-xs tracking-widest uppercase font-bold border ${
+            <div className={`hidden sm:inline-flex items-center space-x-2.5 px-3 py-1 font-mono text-[10px] sm:text-xs tracking-widest uppercase font-bold border ${
               isDark ? 'bg-zinc-900 border-white/20 text-zinc-300' : 'bg-white border-zinc-300 text-zinc-800'
             }`}>
               <Sparkles size={14} className="text-amber-500 animate-pulse" />
               <span>BANGLADESH DISPATCH • 2026 EDITION</span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter uppercase leading-[0.88] font-syne">
+            <h1 className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter uppercase leading-[0.9] font-syne">
               {headline}
             </h1>
 
-            <p className={`text-xs sm:text-sm md:text-base max-w-xl font-mono leading-relaxed uppercase tracking-wider ${
+            <p className={`hidden sm:block text-xs sm:text-sm md:text-base max-w-xl font-mono leading-relaxed uppercase tracking-wider ${
               isDark ? 'text-zinc-400' : 'text-zinc-600'
             }`}>
               {subheading}

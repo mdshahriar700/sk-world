@@ -73,24 +73,25 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
           {/* Close Button */}
           <button
             onClick={onClose}
-            className={`absolute top-3 right-3 sm:top-4 sm:right-4 z-20 p-2 border transition-colors ${
-              isDark ? 'bg-white text-black border-white hover:bg-zinc-200' : 'bg-black text-white border-black hover:bg-zinc-800'
+            className={`sticky top-3 right-3 sm:absolute sm:top-4 sm:right-4 z-30 p-2 border ml-auto mb-2 sm:mb-0 transition-colors block ${
+              isDark ? 'bg-zinc-900 text-white border-white/30 hover:bg-white hover:text-black' : 'bg-stone-100 text-black border-zinc-400 hover:bg-black hover:text-white'
             }`}
           >
             <X size={18} />
           </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 p-4 sm:p-8 max-h-[88vh] overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-8 p-4 sm:p-8 max-h-[85vh] overflow-y-auto">
             
             {/* Left Column: Image Gallery */}
             <div className="md:col-span-6 space-y-3 sm:space-y-4">
-              <div className={`aspect-[3/4] border overflow-hidden relative ${
+              <div className={`max-h-[280px] sm:max-h-[420px] aspect-[3/4] border overflow-hidden relative mx-auto ${
                 isDark ? 'bg-zinc-900 border-white/20' : 'bg-stone-100 border-zinc-200'
               }`}>
                 <img
                   src={currentImg}
                   alt={product.name}
-                  className="w-full h-full object-cover object-top filter contrast-105"
+                  draggable={false}
+                  className="w-full h-full object-cover object-top filter contrast-105 select-none"
                 />
                 {isOutOfStock && (
                   <div className="absolute top-3 left-3 bg-red-600 text-white font-mono text-xs font-black uppercase px-2.5 py-1 tracking-widest">

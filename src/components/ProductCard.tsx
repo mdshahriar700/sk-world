@@ -52,7 +52,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
         <img
           src={hovered ? secondaryImg : primaryImg}
           alt={product.name}
-          className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105 filter contrast-105"
+          draggable={false}
+          className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105 filter contrast-105 pointer-events-none select-none"
         />
 
         {/* Badges */}

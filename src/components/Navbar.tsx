@@ -136,10 +136,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Search size={17} />
           </button>
 
-          {/* Cart Bag Button */}
+          {/* Cart Bag Button (Desktop / Tablet) */}
           <button
             onClick={() => setIsCartOpen(true)}
-            className={`relative transition-colors flex items-center space-x-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 font-mono text-xs font-extrabold uppercase border ${
+            className={`hidden sm:flex relative transition-colors items-center space-x-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 font-mono text-xs font-extrabold uppercase border ${
               isDark
                 ? 'bg-white text-black hover:bg-zinc-200 border-white'
                 : 'bg-black text-white hover:bg-zinc-800 border-black'

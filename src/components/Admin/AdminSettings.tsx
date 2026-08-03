@@ -10,6 +10,12 @@ interface AdminSettingsProps {
 export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefresh }) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     logo_text: settings.logo_text || 'SK WORL',
+    offer_popup_enabled: settings.offer_popup_enabled || 'true',
+    offer_popup_title: settings.offer_popup_title || 'SPECIAL BANGLADESH LAUNCH OFFER ⚡',
+    offer_popup_text:
+      settings.offer_popup_text ||
+      'FLAT 15% EXTRA DISCOUNT ON YOUR FIRST ORDER! CASH ON DELIVERY AVAILABLE ACROSS ALL 64 DISTRICTS IN BANGLADESH.',
+    offer_popup_code: settings.offer_popup_code || 'SKBD15',
     hero_headline: settings.hero_headline || 'YOURSELF INTO THE RIGHT GEAR',
     hero_subheading:
       settings.hero_subheading ||
@@ -309,6 +315,58 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
                 className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Offer Popup Settings */}
+        <div className="bg-neutral-900 border border-white/10 p-6 space-y-4">
+          <h3 className="font-bold text-sm uppercase text-amber-400 border-b border-white/10 pb-2">
+            5. DYNAMIC OFFER POPUP SETTINGS
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-neutral-400 uppercase mb-1">ENABLE OFFER POPUP</label>
+              <select
+                value={formData.offer_popup_enabled || 'true'}
+                onChange={(e) => handleChange('offer_popup_enabled', e.target.value)}
+                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase"
+              >
+                <option value="true">ENABLED (SHOW POPUP)</option>
+                <option value="false">DISABLED (HIDE POPUP)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-neutral-400 uppercase mb-1">PROMO COUPON CODE</label>
+              <input
+                type="text"
+                value={formData.offer_popup_code || ''}
+                onChange={(e) => handleChange('offer_popup_code', e.target.value)}
+                className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase font-bold text-amber-400"
+                placeholder="E.G. SKBD15"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-neutral-400 uppercase mb-1">POPUP TITLE</label>
+            <input
+              type="text"
+              value={formData.offer_popup_title || ''}
+              onChange={(e) => handleChange('offer_popup_title', e.target.value)}
+              className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase font-bold"
+            />
+          </div>
+
+          <div>
+            <label className="block text-neutral-400 uppercase mb-1">POPUP DESCRIPTION / OFFER DETAILS</label>
+            <textarea
+              value={formData.offer_popup_text || ''}
+              onChange={(e) => handleChange('offer_popup_text', e.target.value)}
+              rows={2}
+              className="w-full bg-black border border-white/20 px-3 py-2 text-white focus:outline-none uppercase resize-none"
+            />
           </div>
         </div>
 

@@ -73,6 +73,10 @@ export interface SiteSettings {
   feature2_text: string;
   feature2_image: string;
   logo_text: string;
+  offer_popup_enabled?: string;
+  offer_popup_title?: string;
+  offer_popup_text?: string;
+  offer_popup_code?: string;
   [key: string]: string;
 }
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { Category, Product, Order, SiteSettings, Subscriber } from './types';
 
 // Public Components
@@ -17,6 +18,8 @@ import { CartDrawer } from './components/CartDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
 import { ProductDetailModal } from './components/ProductDetailModal';
 import { SearchModal } from './components/SearchModal';
+import { OfferPopupModal } from './components/OfferPopupModal';
+import { BottomNavbar } from './components/BottomNavbar';
 
 // Admin Components
 import { AdminLogin } from './components/Admin/AdminLogin';
@@ -30,6 +33,8 @@ import { AdminSubscribers } from './components/Admin/AdminSubscribers';
 
 function MainStoreContent() {
   const { isAuthenticated } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   // Store State
   const [categories, setCategories] = useState<Category[]>([]);
@@ -160,7 +165,9 @@ function MainStoreContent() {
   // PUBLIC STOREFRONT VIEW
   // -------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black">
+    <div className={`min-h-screen font-sans pb-16 md:pb-0 transition-colors ${
+      isDark ? 'bg-black text-white selection:bg-white selection:text-black' : 'bg-stone-50 text-zinc-900 selection:bg-black selection:text-white'
+    }`}>
       {/* Header Navigation */}
       <Navbar
         categories={categories}
@@ -249,7 +256,27 @@ function MainStoreContent() {
         onOpenAdmin={handleOpenAdmin}
       />
 
+      {/* Bottom Sticky Mobile Navigation Bar */}
+      <BottomNavbar
+        onHomeClick={() => {
+          setActiveCategorySlug(null);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onCollectionsClick={() => {
+          const el = document.getElementById('newest-products-section');
+          el?.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onOpenSearch={() => setIsSearchOpen(true)}
+      />
+
       {/* Modals & Drawers */}
+      <OfferPopupModal
+        settings={settings}
+        onExploreClick={() => {
+          const el = document.getElementById('newest-products-section');
+          el?.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
       <CartDrawer />
       <CheckoutModal />
       <ProductDetailModal
@@ -268,10 +295,12 @@ function MainStoreContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <MainStoreContent />
-      </CartProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <CartProvider>
+          <MainStoreContent />
+        </CartProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
