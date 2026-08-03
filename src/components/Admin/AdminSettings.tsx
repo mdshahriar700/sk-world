@@ -67,11 +67,37 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
     social_twitter: settings.social_twitter || 'https://twitter.com',
     social_facebook: settings.social_facebook || 'https://facebook.com',
     social_youtube: settings.social_youtube || 'https://youtube.com',
+    telegram_bot_token: settings.telegram_bot_token || '',
+    telegram_chat_id: settings.telegram_chat_id || '',
   });
 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const [webhookSettingUp, setWebhookSettingUp] = useState(false);
+  const [webhookStatus, setWebhookStatus] = useState<string | null>(null);
+
+  const handleSetupWebhook = async () => {
+    setWebhookSettingUp(true);
+    setWebhookStatus(null);
+    try {
+      const res = await fetch('/api/telegram/setup-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ app_url: window.location.origin }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setWebhookStatus('✅ Telegram Webhook registered successfully! When you reply to customer messages on Telegram, replies will stream directly into the live website chat.');
+      } else {
+        setWebhookStatus(`❌ Webhook Setup Error: ${data.description || 'Make sure Bot Token is valid and saved.'}`);
+      }
+    } catch (e: any) {
+      setWebhookStatus(`❌ Failed to connect: ${e.message}`);
+    } finally {
+      setWebhookSettingUp(false);
+    }
+  };
 
   const handleFileUpload = async (fieldKey: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -684,6 +710,69 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
                 className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
               />
             </div>
+          </div>
+        </div>
+
+        {/* 8. Telegram Bot & Live Chat Integration */}
+        <div className="bg-white rounded-[20px] border border-slate-200 p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="font-bold text-sm text-slate-900 flex items-center space-x-2">
+                <span>⚡ 8. Telegram Live Chat & Order Bot Integration</span>
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Send live website chat messages & new orders directly to your Telegram. Reply on Telegram to instantly send responses back to website visitors!
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Telegram Bot Token</label>
+              <input
+                type="text"
+                value={formData.telegram_bot_token || ''}
+                onChange={(e) => handleChange('telegram_bot_token', e.target.value)}
+                placeholder="e.g. 123456789:ABCdefGHIjklMNOpqrs..."
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 font-mono text-xs focus:outline-none focus:border-[#16A34A]"
+              />
+              <span className="text-[10px] text-slate-400 mt-1 block">Get from @BotFather on Telegram</span>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Telegram Chat ID</label>
+              <input
+                type="text"
+                value={formData.telegram_chat_id || ''}
+                onChange={(e) => handleChange('telegram_chat_id', e.target.value)}
+                placeholder="e.g. 987654321 or -100123456789"
+                className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-slate-900 font-mono text-xs focus:outline-none focus:border-[#16A34A]"
+              />
+              <span className="text-[10px] text-slate-400 mt-1 block">Your admin Telegram Chat/User ID</span>
+            </div>
+          </div>
+
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <span className="block font-bold text-slate-800 text-xs">Bi-directional Webhook Connection</span>
+                <span className="text-[11px] text-slate-500">Click below to register the live chat webhook with Telegram after saving your Bot Token.</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleSetupWebhook}
+                disabled={webhookSettingUp || !formData.telegram_bot_token}
+                className="bg-sky-600 hover:bg-sky-700 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
+              >
+                <span>{webhookSettingUp ? 'Connecting Webhook...' : '🔗 Connect Telegram Webhook'}</span>
+              </button>
+            </div>
+
+            {webhookStatus && (
+              <div className="p-3 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700">
+                {webhookStatus}
+              </div>
+            )}
           </div>
         </div>
 

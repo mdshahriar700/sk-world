@@ -1,5 +1,10 @@
 import { ensureDbInitialized } from './db';
-import { sendTelegramOrderNotification } from './telegram';
+import {
+  sendTelegramOrderNotification,
+  sendTelegramChatMessage,
+  handleTelegramWebhookUpdate,
+  setupTelegramWebhook
+} from './telegram';
 import { Product, Category, Order, SiteSettings } from '../types';
 
 export async function handleApiRequest(
@@ -423,6 +428,14 @@ export async function handleApiRequest(
             message
           ]
         });
+
+        // If message is from customer, notify Telegram Admin Bot in background
+        if (sender_type !== 'admin') {
+          sendTelegramChatMessage(session_id, sender_name || 'Customer', message, db, env).catch(err => {
+            console.error('[Telegram Chat Async Error]', err);
+          });
+        }
+
         return { status: 201, data: { success: true } };
       }
 
@@ -435,6 +448,27 @@ export async function handleApiRequest(
           });
         }
         return { status: 200, data: { success: true } };
+      }
+    }
+
+    // -------------------------------------------------------------
+    // TELEGRAM WEBHOOK & SETUP API
+    // -------------------------------------------------------------
+    if (cleanPath === '/telegram-webhook' || cleanPath === '/chat/telegram-webhook' || cleanPath === '/telegram/webhook') {
+      if (method === 'POST') {
+        await handleTelegramWebhookUpdate(body, db, env);
+        return { status: 200, data: { ok: true } };
+      }
+    }
+
+    if (cleanPath === '/telegram/setup-webhook') {
+      if (method === 'POST') {
+        const domainUrl = body.app_url || headers.origin || (headers.host ? `https://${headers.host}` : '');
+        if (!domainUrl) {
+          return { status: 400, data: { error: 'App URL or host missing' } };
+        }
+        const result = await setupTelegramWebhook(domainUrl, db, env);
+        return { status: 200, data: result };
       }
     }
 
