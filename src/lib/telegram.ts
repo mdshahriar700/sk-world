@@ -62,12 +62,49 @@ export async function sendTelegramOrderNotification(order: Order, env?: Record<s
   }
 }
 
+export async function autoSyncTelegramWebhook(baseUrl: string, db?: any, env?: Record<string, any>): Promise<boolean> {
+  if (!baseUrl || !baseUrl.startsWith('http') || !db) return false;
+
+  const targetWebhook = `${baseUrl.replace(/\/$/, '')}/api/telegram-webhook`;
+
+  try {
+    const res = await db.execute(`SELECT value FROM site_settings WHERE key = 'telegram_webhook_url'`);
+    const currentRegistered = res.rows.length > 0 ? String(res.rows[0].value) : '';
+
+    if (currentRegistered === targetWebhook) {
+      return true; // Already synced
+    }
+
+    const { token } = await getTelegramCredentials(db, env);
+    if (!token) return false;
+
+    console.log(`[Telegram] Syncing Telegram Webhook to: ${targetWebhook}`);
+    const webhookRes = await fetch(`https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(targetWebhook)}`);
+    const data = await webhookRes.json();
+
+    if (data.ok) {
+      await db.execute({
+        sql: `INSERT INTO site_settings (key, value) VALUES ('telegram_webhook_url', ?) ON CONFLICT(key) DO UPDATE SET value = ?`,
+        args: [targetWebhook, targetWebhook]
+      });
+      return true;
+    } else {
+      console.error('[Telegram Webhook Sync Error]', data);
+      return false;
+    }
+  } catch (err) {
+    console.error('[Telegram Webhook Sync Exception]', err);
+    return false;
+  }
+}
+
 export async function sendTelegramChatMessage(
   sessionId: string,
   senderName: string,
   chatMessage: string,
   db?: any,
-  env?: Record<string, any>
+  env?: Record<string, any>,
+  baseUrl?: string
 ): Promise<boolean> {
   const { token, chatId } = await getTelegramCredentials(db, env);
 
@@ -76,13 +113,18 @@ export async function sendTelegramChatMessage(
     return false;
   }
 
+  // Auto sync webhook if baseUrl provided
+  if (baseUrl && db) {
+    autoSyncTelegramWebhook(baseUrl, db, env).catch((e) => console.error('[AutoSync Webhook Catch]', e));
+  }
+
   const messageText =
     `💬 *NEW LIVE CHAT MESSAGE*\n\n` +
     `👤 *Customer:* ${senderName || 'Storefront Visitor'}\n` +
     `🆔 *Session ID:* \`${sessionId}\`\n\n` +
     `📝 *Message:*\n"${chatMessage}"\n\n` +
     `─────────────\n` +
-    `💡 *To Reply:* Reply directly to this message on Telegram, or type "#" + sessionId + " Your reply message"!`;
+    `💡 *To Reply:* Reply directly to this message on Telegram, or type your message below!`;
 
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -109,11 +151,11 @@ export async function sendTelegramChatMessage(
 
 export async function handleTelegramWebhookUpdate(update: any, db: any, env?: Record<string, any>): Promise<{ success: boolean; replyMessage?: string }> {
   try {
-    const msg = update?.message || update?.edited_message;
-    if (!msg || !msg.text) return { success: false };
+    const msg = update?.message || update?.edited_message || update?.channel_post;
+    if (!msg) return { success: false };
 
-    const text: string = msg.text.trim();
-    const replyToText: string = msg.reply_to_message?.text || '';
+    const text: string = (msg.text || msg.caption || '').trim();
+    const replyToText: string = msg.reply_to_message?.text || msg.reply_to_message?.caption || '';
 
     // Search for session ID in reply_to_message or in message text itself
     let targetSessionId = '';
@@ -125,10 +167,18 @@ export async function handleTelegramWebhookUpdate(update: any, db: any, env?: Re
     }
 
     // 2. Try matching session ID directly in text e.g. #chat_cust_...
-    if (!targetSessionId) {
+    if (!targetSessionId && text) {
       const textSessionMatch = text.match(/#(chat_cust_[a-zA-Z0-9_]+)/) || text.match(/(chat_cust_[a-zA-Z0-9_]+)/);
       if (textSessionMatch) {
         targetSessionId = textSessionMatch[1];
+      }
+    }
+
+    // 3. Fallback: If admin replied without specifying session ID, target the most recent customer session!
+    if (!targetSessionId && db) {
+      const res = await db.execute(`SELECT session_id FROM chat_messages WHERE sender_type = 'customer' ORDER BY id DESC LIMIT 1`);
+      if (res.rows.length > 0 && res.rows[0].session_id) {
+        targetSessionId = String(res.rows[0].session_id);
       }
     }
 
@@ -137,27 +187,24 @@ export async function handleTelegramWebhookUpdate(update: any, db: any, env?: Re
       return { success: false };
     }
 
-    // Clean up hashtag if text started with #chat_cust_xyz
+    // Clean up session ID from cleanReplyText if text contains it
     let cleanReplyText = text;
-    if (cleanReplyText.startsWith(`#${targetSessionId}`)) {
-      cleanReplyText = cleanReplyText.replace(`#${targetSessionId}`, '').trim();
-    }
+    cleanReplyText = cleanReplyText.replace(`#${targetSessionId}`, '').replace(targetSessionId, '').trim();
 
     if (!cleanReplyText) {
       return { success: false };
     }
 
-    const senderFirstName = msg.from?.first_name || 'Admin';
-    const senderTitle = `${senderFirstName} (Telegram)`;
+    const senderTitle = 'SK WORL Support';
 
     // Insert response into chat_messages
     await db.execute({
-      sql: `INSERT INTO chat_messages (session_id, sender_type, sender_name, message, is_read) VALUES (?, 'admin', ?, ?, 1)`,
+      sql: `INSERT INTO chat_messages (session_id, sender_type, sender_name, message, is_read) VALUES (?, 'admin', ?, ?, 0)`,
       args: [targetSessionId, senderTitle, cleanReplyText]
     });
 
     // Send confirmation back to Telegram
-    const { token, chatId } = await getTelegramCredentials(db, env);
+    const { token } = await getTelegramCredentials(db, env);
     if (token && msg.chat?.id) {
       await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
@@ -165,7 +212,7 @@ export async function handleTelegramWebhookUpdate(update: any, db: any, env?: Re
         body: JSON.stringify({
           chat_id: msg.chat.id,
           reply_to_message_id: msg.message_id,
-          text: `✅ Reply delivered to website customer in Session \`${targetSessionId}\`!`,
+          text: `✅ Reply sent to customer on website (Session \`${targetSessionId}\`)`,
           parse_mode: 'Markdown'
         })
       });
@@ -189,6 +236,12 @@ export async function setupTelegramWebhook(baseUrl: string, db?: any, env?: Reco
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);
     const data = await res.json();
+    if (data.ok && db) {
+      await db.execute({
+        sql: `INSERT INTO site_settings (key, value) VALUES ('telegram_webhook_url', ?) ON CONFLICT(key) DO UPDATE SET value = ?`,
+        args: [webhookUrl, webhookUrl]
+      });
+    }
     return { ok: Boolean(data.ok), description: data.description || JSON.stringify(data) };
   } catch (err: any) {
     return { ok: false, description: err.message };

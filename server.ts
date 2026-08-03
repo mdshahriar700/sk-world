@@ -10,7 +10,7 @@ async function startServer() {
   app.use(express.json());
 
   // API router for Express backend (dev & standalone Node production)
-  app.all("/api/*", async (req, res) => {
+  app.all(["/api/*", "/telegram-webhook"], async (req, res) => {
     try {
       const query: Record<string, string> = {};
       for (const [k, v] of Object.entries(req.query)) {

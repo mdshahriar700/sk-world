@@ -18,6 +18,21 @@ export async function handleApiRequest(
   const db = await ensureDbInitialized(env);
   const cleanPath = path.replace(/^\/api/, '').replace(/\/$/, '') || '/';
 
+  // Extract public domain URL of request for automatic Telegram webhook registration
+  const host = headers['x-forwarded-host'] || headers['host'] || '';
+  const proto = headers['x-forwarded-proto'] || 'https';
+  let currentBaseUrl = '';
+  if (host) {
+    currentBaseUrl = `${proto}://${host}`;
+  } else if (headers.origin) {
+    currentBaseUrl = headers.origin;
+  } else if (headers.referer) {
+    try {
+      const u = new URL(headers.referer);
+      currentBaseUrl = u.origin;
+    } catch (e) {}
+  }
+
   try {
     // -------------------------------------------------------------
     // PRODUCTS API
@@ -431,7 +446,7 @@ export async function handleApiRequest(
 
         // If message is from customer, notify Telegram Admin Bot in background
         if (sender_type !== 'admin') {
-          sendTelegramChatMessage(session_id, sender_name || 'Customer', message, db, env).catch(err => {
+          sendTelegramChatMessage(session_id, sender_name || 'Customer', message, db, env, currentBaseUrl).catch(err => {
             console.error('[Telegram Chat Async Error]', err);
           });
         }
