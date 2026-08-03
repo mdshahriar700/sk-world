@@ -106,9 +106,75 @@ export async function initDatabaseSchema(db: Client) {
       subscribed_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // 7. Testimonials
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS testimonials (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      role TEXT,
+      review TEXT NOT NULL,
+      rating INTEGER DEFAULT 5,
+      avatar_url TEXT,
+      is_visible INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // 8. Chat Messages
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS chat_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id TEXT NOT NULL,
+      sender_type TEXT NOT NULL,
+      sender_name TEXT DEFAULT 'Customer',
+      message TEXT NOT NULL,
+      is_read INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
 }
 
 export async function seedDefaultData(db: Client) {
+  // Check if testimonials table is empty and seed
+  try {
+    const testCheck = await db.execute('SELECT COUNT(*) as count FROM testimonials');
+    const testCount = Number(testCheck.rows[0]?.count || 0);
+    if (testCount === 0) {
+      const seedTestimonials = [
+        {
+          name: 'Siam Ahmed',
+          role: 'Dhaka, Bangladesh',
+          review: 'SK WORL heavyweight hoodie is absolute luxury! The 450gsm fabric fit feels like high-end European streetwear. Ordered via COD and got delivery in 24 hours.',
+          rating: 5,
+          avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'
+        },
+        {
+          name: 'Tanvir Hasan',
+          role: 'Chittagong, Bangladesh',
+          review: 'The raw edge oversized tee fitting is unmatched. True to size, premium stitching, and the fabric softness remains even after multiple washes.',
+          rating: 5,
+          avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200'
+        },
+        {
+          name: 'Nusrat Jahan',
+          role: 'Sylhet, Bangladesh',
+          review: 'Top tier streetwear brand in BD right now! Customer support via live chat helped me pick the right oversized size.',
+          rating: 5,
+          avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200'
+        }
+      ];
+      for (const t of seedTestimonials) {
+        await db.execute({
+          sql: 'INSERT INTO testimonials (name, role, review, rating, avatar_url, is_visible) VALUES (?, ?, ?, ?, ?, 1)',
+          args: [t.name, t.role, t.review, t.rating, t.avatar_url]
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('Testimonial seed check warning:', err);
+  }
+
   // Check if categories table is empty
   const catCheck = await db.execute('SELECT COUNT(*) as count FROM categories');
   const catCount = Number(catCheck.rows[0]?.count || 0);

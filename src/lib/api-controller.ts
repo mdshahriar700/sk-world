@@ -186,8 +186,38 @@ export async function handleApiRequest(
     }
 
     // -------------------------------------------------------------
-    // ORDERS API
+    // ORDERS & ORDER TRACKING API
     // -------------------------------------------------------------
+    if (cleanPath === '/orders/track' || cleanPath.startsWith('/orders/track')) {
+      if (method === 'GET') {
+        const q = (query.q || query.phone || query.id || '').trim();
+        if (!q) {
+          return { status: 400, data: { error: 'Please enter an Order ID or Phone Number' } };
+        }
+
+        const cleanNum = q.replace('#', '');
+        const isNum = !isNaN(Number(cleanNum)) && cleanNum.length > 0;
+
+        let sql = `SELECT * FROM orders WHERE phone = ? OR phone LIKE ?`;
+        let args: any[] = [q, `%${q}%`];
+
+        if (isNum) {
+          sql = `SELECT * FROM orders WHERE id = ? OR phone = ? OR phone LIKE ?`;
+          args = [Number(cleanNum), q, `%${q}%`];
+        }
+
+        sql += ` ORDER BY created_at DESC`;
+        const res = await db.execute({ sql, args });
+
+        const orders = res.rows.map((row: any) => ({
+          ...row,
+          items: typeof row.items === 'string' ? safeJsonParse(row.items, []) : row.items
+        }));
+
+        return { status: 200, data: orders };
+      }
+    }
+
     if (cleanPath === '/orders' || cleanPath.startsWith('/orders/')) {
       const parts = cleanPath.split('/').filter(Boolean);
 
@@ -279,6 +309,132 @@ export async function handleApiRequest(
       if (method === 'GET') {
         const res = await db.execute(`SELECT * FROM subscribers ORDER BY subscribed_at DESC`);
         return { status: 200, data: res.rows };
+      }
+    }
+
+    // -------------------------------------------------------------
+    // TESTIMONIALS API
+    // -------------------------------------------------------------
+    if (cleanPath === '/testimonials' || cleanPath.startsWith('/testimonials/')) {
+      const parts = cleanPath.split('/').filter(Boolean);
+
+      if (method === 'GET') {
+        let sql = `SELECT * FROM testimonials`;
+        if (query.visible_only === 'true') {
+          sql += ` WHERE is_visible = 1`;
+        }
+        sql += ` ORDER BY id DESC`;
+
+        const res = await db.execute(sql);
+        const testimonials = res.rows.map((r: any) => ({
+          ...r,
+          is_visible: Boolean(r.is_visible)
+        }));
+        return { status: 200, data: testimonials };
+      }
+
+      if (method === 'POST') {
+        const { name, role, review, rating, avatar_url, is_visible } = body;
+        if (!name || !review) {
+          return { status: 400, data: { error: 'Name and Review content are required' } };
+        }
+        const res = await db.execute({
+          sql: `INSERT INTO testimonials (name, role, review, rating, avatar_url, is_visible) VALUES (?, ?, ?, ?, ?, ?)`,
+          args: [
+            name,
+            role || '',
+            review,
+            Number(rating) || 5,
+            avatar_url || '',
+            is_visible !== false ? 1 : 0
+          ]
+        });
+        return { status: 201, data: { success: true, id: Number(res.lastInsertRowid) } };
+      }
+
+      if (method === 'PUT') {
+        const id = parts[1] || body.id;
+        const { name, role, review, rating, avatar_url, is_visible } = body;
+        await db.execute({
+          sql: `UPDATE testimonials SET name=?, role=?, review=?, rating=?, avatar_url=?, is_visible=? WHERE id=?`,
+          args: [
+            name,
+            role || '',
+            review,
+            Number(rating) || 5,
+            avatar_url || '',
+            is_visible ? 1 : 0,
+            Number(id)
+          ]
+        });
+        return { status: 200, data: { success: true } };
+      }
+
+      if (method === 'DELETE') {
+        const id = parts[1] || query.id;
+        await db.execute({ sql: `DELETE FROM testimonials WHERE id = ?`, args: [Number(id)] });
+        return { status: 200, data: { success: true } };
+      }
+    }
+
+    // -------------------------------------------------------------
+    // LIVE CHAT API
+    // -------------------------------------------------------------
+    if (cleanPath === '/chat' || cleanPath.startsWith('/chat')) {
+      if (method === 'GET') {
+        if (query.session_id) {
+          const res = await db.execute({
+            sql: `SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC`,
+            args: [query.session_id]
+          });
+          const messages = res.rows.map((r: any) => ({
+            ...r,
+            is_read: Boolean(r.is_read)
+          }));
+          return { status: 200, data: messages };
+        } else {
+          // Admin list active customer sessions
+          const res = await db.execute(`
+            SELECT 
+              m1.session_id, 
+              m1.message as last_message, 
+              m1.created_at as last_time, 
+              m1.sender_name as customer_name,
+              (SELECT COUNT(*) FROM chat_messages m2 WHERE m2.session_id = m1.session_id AND m2.is_read = 0 AND m2.sender_type = 'customer') as unread_count
+            FROM chat_messages m1 
+            WHERE id IN (SELECT MAX(id) FROM chat_messages GROUP BY session_id) 
+            ORDER BY m1.created_at DESC
+          `);
+          return { status: 200, data: res.rows };
+        }
+      }
+
+      if (method === 'POST') {
+        const { session_id, sender_type, sender_name, message } = body;
+        if (!session_id || !message) {
+          return { status: 400, data: { error: 'Session ID and Message required' } };
+        }
+        await db.execute({
+          sql: `INSERT INTO chat_messages (session_id, sender_type, sender_name, message, is_read) VALUES (?, ?, ?, ?, 0)`,
+          args: [
+            session_id,
+            sender_type === 'admin' ? 'admin' : 'customer',
+            sender_name || (sender_type === 'admin' ? 'SK WORL Support' : 'Customer'),
+            message
+          ]
+        });
+        return { status: 201, data: { success: true } };
+      }
+
+      if (method === 'PUT') {
+        const { session_id } = body;
+        if (session_id) {
+          await db.execute({
+            sql: `UPDATE chat_messages SET is_read = 1 WHERE session_id = ? AND sender_type = 'customer'`,
+            args: [session_id]
+          });
+        }
+        return { status: 200, data: { success: true } };
       }
     }
 

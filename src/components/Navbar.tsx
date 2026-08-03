@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Search, Menu, X, Sun, Moon } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Sun, Moon, Truck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { Category, SiteSettings } from '../types';
 import { useTheme } from '../context/ThemeContext';
@@ -11,6 +11,7 @@ interface NavbarProps {
   onSelectCategory: (slug: string | null) => void;
   onOpenAdmin: () => void;
   onOpenSearch: () => void;
+  onOpenOrderTracking?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -19,6 +20,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeCategory,
   onSelectCategory,
   onOpenSearch,
+  onOpenOrderTracking,
 }) => {
   const { setIsCartOpen, cartCount } = useCart();
   const { theme, toggleTheme } = useTheme();
@@ -32,7 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     'SK WORL • BANGLADESH EDITION 2026 • CASH ON DELIVERY NATIONWIDE • FREE EXPRESS SHIPPING OVER ৳2,500';
 
   return (
-    <header className={`sticky top-0 z-50 backdrop-blur-md border-b transition-all shadow-md ${
+    <header className={`sticky top-0 left-0 right-0 z-[100] w-full backdrop-blur-md border-b transition-all shadow-md ${
       isDark
         ? 'bg-black/95 border-white/10 text-white'
         : 'bg-white/95 border-zinc-200 text-zinc-900 shadow-sm'
@@ -124,6 +126,22 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Utility Buttons */}
         <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Track Order Button */}
+          {onOpenOrderTracking && (
+            <button
+              onClick={onOpenOrderTracking}
+              className={`flex items-center space-x-1.5 p-1.5 sm:px-3 sm:py-2 border transition-all text-xs font-mono font-bold uppercase ${
+                isDark
+                  ? 'text-emerald-400 border-emerald-500/30 hover:bg-emerald-950/40'
+                  : 'text-emerald-700 border-emerald-600/30 bg-emerald-50/50 hover:bg-emerald-100/80'
+              }`}
+              title="Track Order Status"
+            >
+              <Truck size={16} />
+              <span className="hidden lg:inline">TRACK ORDER</span>
+            </button>
+          )}
+
           {/* Theme Switcher Toggle */}
           <button
             onClick={toggleTheme}

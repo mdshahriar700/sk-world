@@ -95,6 +95,35 @@ export interface Subscriber {
   subscribed_at: string;
 }
 
+export interface Testimonial {
+  id: number;
+  name: string;
+  role?: string;
+  review: string;
+  rating: number;
+  avatar_url?: string;
+  is_visible: boolean;
+  created_at?: string;
+}
+
+export interface ChatMessage {
+  id: number;
+  session_id: string;
+  sender_type: 'customer' | 'admin';
+  sender_name: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface ChatSession {
+  session_id: string;
+  last_message: string;
+  last_time: string;
+  unread_count: number;
+  customer_name: string;
+}
+
 export interface AdminUser {
   id: number;
   email: string;

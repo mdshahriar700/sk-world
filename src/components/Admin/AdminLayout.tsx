@@ -16,7 +16,9 @@ import {
   X,
   Store,
   ChevronDown,
-  Sparkles
+  Sparkles,
+  MessageSquare,
+  MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -25,6 +27,8 @@ export type AdminTab =
   | 'products'
   | 'categories'
   | 'orders'
+  | 'testimonials'
+  | 'chat'
   | 'subscribers'
   | 'admin-users'
   | 'settings';
@@ -51,6 +55,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: 'products', label: 'Products', icon: Package },
     { id: 'categories', label: 'Categories', icon: FolderTree },
     { id: 'orders', label: 'Orders', icon: ShoppingCart, badge: 'New' },
+    { id: 'chat', label: 'Live Customer Chat', icon: MessageCircle, badge: 'Live' },
+    { id: 'testimonials', label: 'Testimonials', icon: MessageSquare },
     { id: 'subscribers', label: 'Subscribers', icon: Mail },
     { id: 'admin-users', label: 'Admin Users', icon: UserCheck },
     { id: 'settings', label: 'Site Settings', icon: Sliders },

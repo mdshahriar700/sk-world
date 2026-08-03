@@ -12,6 +12,7 @@ import { MarqueeBanner } from './components/MarqueeBanner';
 import { ProductGrid } from './components/ProductGrid';
 import { SaleBanner } from './components/SaleBanner';
 import { FeatureBlocks } from './components/FeatureBlocks';
+import { Testimonials } from './components/Testimonials';
 import { Newsletter } from './components/Newsletter';
 import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
@@ -20,6 +21,8 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { SearchModal } from './components/SearchModal';
 import { OfferPopupModal } from './components/OfferPopupModal';
 import { BottomNavbar } from './components/BottomNavbar';
+import { OrderTrackingModal } from './components/OrderTrackingModal';
+import { LiveChatWidget } from './components/LiveChatWidget';
 
 // Admin Components
 import { AdminLogin } from './components/Admin/AdminLogin';
@@ -31,6 +34,8 @@ import { AdminOrders } from './components/Admin/AdminOrders';
 import { AdminSettings } from './components/Admin/AdminSettings';
 import { AdminSubscribers } from './components/Admin/AdminSubscribers';
 import { AdminUsers } from './components/Admin/AdminUsers';
+import { AdminTestimonials } from './components/Admin/AdminTestimonials';
+import { AdminLiveChat } from './components/Admin/AdminLiveChat';
 
 function MainStoreContent() {
   const { isAuthenticated } = useAuth();
@@ -48,12 +53,13 @@ function MainStoreContent() {
   const [activeCategorySlug, setActiveCategorySlug] = useState<string | null>(null);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isOrderTrackingOpen, setIsOrderTrackingOpen] = useState(false);
 
   // Admin View State
   const [isAdminView, setIsAdminView] = useState<boolean>(() => {
     return window.location.pathname.startsWith('/admin') || window.location.hash === '#admin';
   });
-  const [adminTab, setAdminTab] = useState<'dashboard' | 'products' | 'categories' | 'orders' | 'settings' | 'subscribers'>('dashboard');
+  const [adminTab, setAdminTab] = useState<any>('dashboard');
 
   const [loading, setLoading] = useState(true);
 
@@ -172,6 +178,8 @@ function MainStoreContent() {
           <AdminCategories categories={categories} onRefresh={fetchData} />
         )}
         {adminTab === 'orders' && <AdminOrders orders={orders} onRefresh={fetchData} />}
+        {adminTab === 'chat' && <AdminLiveChat />}
+        {adminTab === 'testimonials' && <AdminTestimonials />}
         {adminTab === 'settings' && <AdminSettings settings={settings} onRefresh={fetchData} />}
         {adminTab === 'subscribers' && <AdminSubscribers subscribers={subscribers} />}
         {adminTab === 'admin-users' && <AdminUsers onRefresh={fetchData} />}
@@ -199,6 +207,7 @@ function MainStoreContent() {
         onSelectCategory={handleSelectCategoryAndScroll}
         onOpenAdmin={handleOpenAdmin}
         onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenOrderTracking={() => setIsOrderTrackingOpen(true)}
       />
 
       {/* Hero Section */}
@@ -262,6 +271,9 @@ function MainStoreContent() {
         }}
       />
 
+      {/* Customer Testimonials Section */}
+      <Testimonials />
+
       {/* Newsletter Signup */}
       <Newsletter settings={settings} />
 
@@ -284,9 +296,17 @@ function MainStoreContent() {
           el?.scrollIntoView({ behavior: 'smooth' });
         }}
         onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenOrderTracking={() => setIsOrderTrackingOpen(true)}
       />
 
+      {/* Floating Customer Live Chat Widget */}
+      <LiveChatWidget />
+
       {/* Modals & Drawers */}
+      <OrderTrackingModal
+        isOpen={isOrderTrackingOpen}
+        onClose={() => setIsOrderTrackingOpen(false)}
+      />
       <OfferPopupModal
         settings={settings}
         onExploreClick={() => {

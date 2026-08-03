@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Grid, Search, ShoppingBag, Sun, Moon } from 'lucide-react';
+import { Home, Grid, Search, ShoppingBag, Truck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -7,15 +7,17 @@ interface BottomNavbarProps {
   onHomeClick: () => void;
   onCollectionsClick: () => void;
   onOpenSearch: () => void;
+  onOpenOrderTracking?: () => void;
 }
 
 export const BottomNavbar: React.FC<BottomNavbarProps> = ({
   onHomeClick,
   onCollectionsClick,
   onOpenSearch,
+  onOpenOrderTracking,
 }) => {
   const { setIsCartOpen, cartCount } = useCart();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
 
   const isDark = theme === 'dark';
 
@@ -47,6 +49,17 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
           <span className="tracking-tighter">CATALOG</span>
         </button>
 
+        {/* Track Order */}
+        <button
+          onClick={onOpenOrderTracking}
+          className={`flex flex-col items-center justify-center py-1 px-1 rounded transition-colors ${
+            isDark ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-700 hover:text-emerald-900'
+          }`}
+        >
+          <Truck size={19} className="mb-0.5" />
+          <span className="tracking-tighter">TRACK</span>
+        </button>
+
         {/* Search */}
         <button
           onClick={onOpenSearch}
@@ -74,17 +87,6 @@ export const BottomNavbar: React.FC<BottomNavbarProps> = ({
             )}
           </div>
           <span className="tracking-tighter font-black">BAG ({cartCount})</span>
-        </button>
-
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className={`flex flex-col items-center justify-center py-1 px-1 rounded transition-colors ${
-            isDark ? 'text-amber-400' : 'text-zinc-800'
-          }`}
-        >
-          {isDark ? <Sun size={19} className="mb-0.5" /> : <Moon size={19} className="mb-0.5" />}
-          <span className="tracking-tighter">{isDark ? 'LIGHT' : 'DARK'}</span>
         </button>
 
       </div>
