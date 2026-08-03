@@ -1,0 +1,6 @@
+{
+  "name": "SK WORL",
+  "description": "Dynamic high-fashion e-commerce platform inspired by AZ Milano design, powered by Turso SQLite database, Cloudflare Pages Functions, Cloudinary, and Telegram order alerts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
