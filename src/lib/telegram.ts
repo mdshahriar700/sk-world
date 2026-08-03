@@ -63,22 +63,32 @@ export async function sendTelegramOrderNotification(order: Order, env?: Record<s
 }
 
 export async function autoSyncTelegramWebhook(baseUrl: string, db?: any, env?: Record<string, any>): Promise<boolean> {
-  if (!baseUrl || !baseUrl.startsWith('http') || !db) return false;
+  if (!baseUrl || !db) return false;
 
-  const targetWebhook = `${baseUrl.replace(/\/$/, '')}/api/telegram-webhook`;
+  let cleanUrl = baseUrl.trim();
+  if (cleanUrl.startsWith('http://')) {
+    cleanUrl = cleanUrl.replace('http://', 'https://');
+  }
+
+  // Telegram rejects webhooks to localhost or internal IP addresses
+  if (cleanUrl.includes('localhost') || cleanUrl.includes('127.0.0.1')) {
+    return false;
+  }
+
+  const targetWebhook = `${cleanUrl.replace(/\/$/, '')}/api/telegram-webhook`;
 
   try {
     const res = await db.execute(`SELECT value FROM site_settings WHERE key = 'telegram_webhook_url'`);
     const currentRegistered = res.rows.length > 0 ? String(res.rows[0].value) : '';
 
     if (currentRegistered === targetWebhook) {
-      return true; // Already synced
+      return true; // Already synced to this exact domain
     }
 
     const { token } = await getTelegramCredentials(db, env);
     if (!token) return false;
 
-    console.log(`[Telegram] Syncing Telegram Webhook to: ${targetWebhook}`);
+    console.log(`[Telegram] Registering webhook endpoint: ${targetWebhook}`);
     const webhookRes = await fetch(`https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(targetWebhook)}`);
     const data = await webhookRes.json();
 
@@ -89,7 +99,7 @@ export async function autoSyncTelegramWebhook(baseUrl: string, db?: any, env?: R
       });
       return true;
     } else {
-      console.error('[Telegram Webhook Sync Error]', data);
+      console.warn('[Telegram Webhook Sync Warning]', data?.description || JSON.stringify(data));
       return false;
     }
   } catch (err) {
@@ -231,7 +241,12 @@ export async function setupTelegramWebhook(baseUrl: string, db?: any, env?: Reco
     return { ok: false, description: 'Telegram Bot Token missing' };
   }
 
-  const webhookUrl = `${baseUrl.replace(/\/$/, '')}/api/telegram-webhook`;
+  let cleanUrl = baseUrl.trim();
+  if (cleanUrl.startsWith('http://')) {
+    cleanUrl = cleanUrl.replace('http://', 'https://');
+  }
+
+  const webhookUrl = `${cleanUrl.replace(/\/$/, '')}/api/telegram-webhook`;
 
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);

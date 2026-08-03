@@ -20,7 +20,8 @@ export async function handleApiRequest(
 
   // Extract public domain URL of request for automatic Telegram webhook registration
   const host = headers['x-forwarded-host'] || headers['host'] || '';
-  const proto = headers['x-forwarded-proto'] || 'https';
+  let proto = headers['x-forwarded-proto'] || 'https';
+  if (proto.includes(',')) proto = proto.split(',')[0].trim();
   let currentBaseUrl = '';
   if (host) {
     currentBaseUrl = `${proto}://${host}`;
@@ -31,6 +32,9 @@ export async function handleApiRequest(
       const u = new URL(headers.referer);
       currentBaseUrl = u.origin;
     } catch (e) {}
+  }
+  if (currentBaseUrl.startsWith('http://') && !currentBaseUrl.includes('localhost') && !currentBaseUrl.includes('127.0.0.1')) {
+    currentBaseUrl = currentBaseUrl.replace('http://', 'https://');
   }
 
   try {
