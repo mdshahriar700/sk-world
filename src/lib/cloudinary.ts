@@ -1,11 +1,22 @@
+import { compressImageToTargetSize } from './imageCompressor';
+
 export async function uploadImageToCloudinary(file: File, cloudName?: string, uploadPreset?: string): Promise<string> {
+  // Compress image to ~70KB target with high quality WebP export
+  let uploadFile = file;
+  try {
+    uploadFile = await compressImageToTargetSize(file, 70);
+    console.log(`Original size: ${(file.size / 1024).toFixed(1)}KB -> Compressed size: ${(uploadFile.size / 1024).toFixed(1)}KB`);
+  } catch (compErr) {
+    console.warn('Image compression warning, using original file:', compErr);
+  }
+
   const cName = cloudName || (typeof process !== 'undefined' ? process.env.CLOUDINARY_CLOUD_NAME : '') || (import.meta as any).env?.VITE_CLOUDINARY_CLOUD_NAME;
   const cPreset = uploadPreset || (typeof process !== 'undefined' ? process.env.CLOUDINARY_UPLOAD_PRESET : '') || (import.meta as any).env?.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   if (cName && cPreset) {
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', uploadFile);
       formData.append('upload_preset', cPreset);
 
       const response = await fetch(`https://api.cloudinary.com/v1_1/${cName}/image/upload`, {
@@ -28,6 +39,6 @@ export async function uploadImageToCloudinary(file: File, cloudName?: string, up
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
     reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(uploadFile);
   });
 }

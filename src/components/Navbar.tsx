@@ -32,7 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     'SK WORL • BANGLADESH EDITION 2026 • CASH ON DELIVERY NATIONWIDE • FREE EXPRESS SHIPPING OVER ৳2,500';
 
   return (
-    <header className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors ${
+    <header className={`sticky top-0 z-50 backdrop-blur-md border-b transition-all shadow-md ${
       isDark
         ? 'bg-black/95 border-white/10 text-white'
         : 'bg-white/95 border-zinc-200 text-zinc-900 shadow-sm'

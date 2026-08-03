@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SiteSettings } from '../../types';
-import { Save, CheckCircle2, Upload, Sliders, ToggleLeft, ToggleRight, Sparkles } from 'lucide-react';
+import { Save, CheckCircle2, Upload, Sliders, ToggleLeft, ToggleRight, Sparkles, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
 import { uploadImageToCloudinary } from '../../lib/cloudinary';
 
 interface AdminSettingsProps {
@@ -23,6 +23,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
     hero_image_url:
       settings.hero_image_url ||
       'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&q=80&w=1600',
+    hero_images: settings.hero_images || '',
     hero_cta_text: settings.hero_cta_text || 'VIEW SUMMER COLLECTIONS',
     marquee_enabled: settings.marquee_enabled || 'true',
     marquee_text:
@@ -89,6 +90,66 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
 
   const handleChange = (key: string, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const [newHeroUrlInput, setNewHeroUrlInput] = useState('');
+
+  // Get current list of hero images
+  const getHeroImagesList = (): string[] => {
+    if (formData.hero_images) {
+      try {
+        const parsed = JSON.parse(formData.hero_images);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        const list = formData.hero_images.split(',').map((s) => s.trim()).filter(Boolean);
+        if (list.length > 0) return list;
+      }
+    }
+    if (formData.hero_image_url) {
+      return [formData.hero_image_url];
+    }
+    return [
+      'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&q=80&w=1600',
+      'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600',
+    ];
+  };
+
+  const currentHeroImages = getHeroImagesList();
+
+  const updateHeroImagesState = (newArray: string[]) => {
+    const jsonStr = JSON.stringify(newArray);
+    setFormData((prev) => ({
+      ...prev,
+      hero_images: jsonStr,
+      hero_image_url: newArray.length > 0 ? newArray[0] : '',
+    }));
+  };
+
+  const handleHeroImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingField('hero_images_upload');
+    try {
+      const url = await uploadImageToCloudinary(file);
+      const updated = [...currentHeroImages, url];
+      updateHeroImagesState(updated);
+    } catch (err) {
+      alert('Failed to upload hero slide image');
+    } finally {
+      setUploadingField(null);
+    }
+  };
+
+  const handleAddHeroUrl = () => {
+    if (!newHeroUrlInput.trim()) return;
+    const updated = [...currentHeroImages, newHeroUrlInput.trim()];
+    updateHeroImagesState(updated);
+    setNewHeroUrlInput('');
+  };
+
+  const handleRemoveHeroImage = (indexToRemove: number) => {
+    const updated = currentHeroImages.filter((_, idx) => idx !== indexToRemove);
+    updateHeroImagesState(updated);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -263,33 +324,79 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
             />
           </div>
 
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Hero Background Image</label>
-            {formData.hero_image_url && (
-              <div className="mb-2 relative w-40 h-24 rounded-xl border border-slate-200 overflow-hidden bg-slate-100">
-                <img src={formData.hero_image_url} alt="Hero Preview" className="w-full h-full object-cover" />
+          {/* Multiple Hero Slider Images */}
+          <div className="pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <label className="block font-bold text-slate-800 text-xs">Hero Slider Images (Multiple Images Carousel)</label>
+                <p className="text-[11px] text-slate-500">Add multiple images. They will automatically slide with smooth transitions on your storefront.</p>
+              </div>
+              <span className="font-mono text-xs bg-slate-100 font-bold px-2.5 py-1 rounded-full text-slate-700">
+                {currentHeroImages.length} {currentHeroImages.length === 1 ? 'Slide' : 'Slides'}
+              </span>
+            </div>
+
+            {/* List of current slide images */}
+            {currentHeroImages.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-3">
+                {currentHeroImages.map((imgUrl, idx) => (
+                  <div key={idx} className="relative group rounded-xl border border-slate-200 overflow-hidden bg-slate-900 aspect-[4/3] shadow-sm">
+                    <img src={imgUrl} alt={`Slide ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
+                    <span className="absolute top-2 left-2 font-mono text-[10px] font-bold bg-black/80 text-white px-2 py-0.5 rounded-md border border-white/20">
+                      Slide #{idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveHeroImage(idx)}
+                      title="Remove Slide"
+                      className="absolute top-2 right-2 p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow transition-all"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                    <div className="absolute bottom-2 left-2 right-2 text-[10px] text-white/80 font-mono truncate">
+                      {imgUrl}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-            <div className="flex items-center gap-2 mb-2">
-              <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-3 py-2 rounded-xl border border-slate-200 inline-flex items-center space-x-2">
-                <Upload size={14} />
-                <span>{uploadingField === 'hero_image_url' ? 'Uploading...' : 'Upload Image from Device'}</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload('hero_image_url', e)}
-                  className="hidden"
-                  disabled={uploadingField === 'hero_image_url'}
-                />
-              </label>
+
+            {/* Add new slide image controls */}
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+              <span className="block font-semibold text-xs text-slate-800">Add Slide Image</span>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <label className="cursor-pointer bg-white hover:bg-slate-100 text-slate-800 font-semibold px-3.5 py-2 rounded-xl border border-slate-200 inline-flex items-center justify-center space-x-2 text-xs">
+                  <Upload size={14} />
+                  <span>{uploadingField === 'hero_images_upload' ? 'Uploading Image...' : 'Upload Image'}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleHeroImageUpload}
+                    className="hidden"
+                    disabled={uploadingField === 'hero_images_upload'}
+                  />
+                </label>
+
+                <div className="flex-1 flex gap-2">
+                  <input
+                    type="text"
+                    value={newHeroUrlInput}
+                    onChange={(e) => setNewHeroUrlInput(e.target.value)}
+                    placeholder="Or paste image URL (e.g. https://.../photo.jpg)"
+                    className="flex-1 bg-white border border-slate-200 px-3 py-2 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-[#16A34A]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddHeroUrl}
+                    className="bg-[#16A34A] hover:bg-[#15803D] text-white font-semibold px-3.5 py-2 rounded-xl text-xs inline-flex items-center space-x-1"
+                  >
+                    <Plus size={14} />
+                    <span>Add</span>
+                  </button>
+                </div>
+              </div>
             </div>
-            <input
-              type="text"
-              value={formData.hero_image_url || ''}
-              onChange={(e) => handleChange('hero_image_url', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A]"
-              placeholder="Or enter image URL..."
-            />
           </div>
         </div>
 
