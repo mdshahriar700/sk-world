@@ -18,9 +18,12 @@ import {
   ChevronDown,
   Sparkles,
   MessageSquare,
-  MessageCircle
+  MessageCircle,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export type AdminTab =
   | 'dashboard'
@@ -47,6 +50,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   children,
 }) => {
   const { logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
+
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -63,11 +69,15 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#111827] flex font-sans antialiased">
+    <div className={`min-h-screen flex font-sans antialiased transition-colors ${
+      isDark ? 'bg-zinc-950 text-white' : 'bg-[#F8FAFC] text-[#111827]'
+    }`}>
       {/* ------------------------------------------------------------- */}
       {/* LEFT SIDEBAR (DESKTOP) */}
       {/* ------------------------------------------------------------- */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-[#E5E7EB] sticky top-0 h-screen z-30 shrink-0">
+      <aside className={`hidden lg:flex flex-col w-64 border-r sticky top-0 h-screen z-30 shrink-0 ${
+        isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-[#E5E7EB]'
+      }`}>
         
         {/* Brand Header */}
         <div className="p-5 border-b border-[#E5E7EB] flex items-center justify-between">
@@ -235,7 +245,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       <div className="flex-1 flex flex-col min-w-0">
         
         {/* TOP HEADER */}
-        <header className="bg-white border-b border-[#E5E7EB] sticky top-0 z-20 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
+        <header className={`border-b sticky top-0 z-20 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4 transition-colors ${
+          isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-[#E5E7EB]'
+        }`}>
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setMobileSidebarOpen(true)}
@@ -263,6 +275,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           {/* Right Header Controls */}
           <div className="flex items-center space-x-2.5 sm:space-x-3">
             
+            {/* Dark Mode Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-xl transition-colors border flex items-center justify-center ${
+                isDark
+                  ? 'bg-zinc-800 text-amber-400 border-zinc-700 hover:bg-zinc-700'
+                  : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+              }`}
+              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {isDark ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+
             {/* Quick Add Product Button */}
             <button
               onClick={() => setActiveTab('products')}

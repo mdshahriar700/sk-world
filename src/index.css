@@ -22,6 +22,10 @@
   code, kbd, samp, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
+
+  .font-bengali, .font-siliguri, .font-bangla {
+    font-family: 'Hind Siliguri', 'Space Grotesk', sans-serif;
+  }
 }
 
 @keyframes marquee {

@@ -434,7 +434,7 @@ export async function handleApiRequest(
       }
 
       if (method === 'POST') {
-        const { session_id, sender_type, sender_name, message } = body;
+        const { session_id, sender_type, sender_name, sender_email, message } = body;
         if (!session_id || !message) {
           return { status: 400, data: { error: 'Session ID and Message required' } };
         }
@@ -443,7 +443,7 @@ export async function handleApiRequest(
           args: [
             session_id,
             sender_type === 'admin' ? 'admin' : 'customer',
-            sender_name || (sender_type === 'admin' ? 'SK WORL Support' : 'Customer'),
+            sender_name || (sender_type === 'admin' ? 'SK WORLD Support' : 'Customer'),
             message
           ]
         });
@@ -457,12 +457,13 @@ export async function handleApiRequest(
               message,
               sender_name || 'Customer',
               db,
-              env
+              env,
+              sender_email
             );
 
             if (aiReplyText) {
               await db.execute({
-                sql: `INSERT INTO chat_messages (session_id, sender_type, sender_name, message, is_read) VALUES (?, 'admin', 'SK WORL AI Assistant', ?, 0)`,
+                sql: `INSERT INTO chat_messages (session_id, sender_type, sender_name, message, is_read) VALUES (?, 'admin', 'SK WORLD AI Assistant', ?, 0)`,
                 args: [session_id, aiReplyText]
               });
             }
