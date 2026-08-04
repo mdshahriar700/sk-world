@@ -62,6 +62,9 @@ export const AdminLiveChat: React.FC = () => {
   const fetchSessions = async () => {
     try {
       const res = await fetch('/api/chat');
+      if (!res.ok) return;
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) return;
       const data = await res.json();
       if (Array.isArray(data)) {
         setSessions(data);
@@ -87,6 +90,9 @@ export const AdminLiveChat: React.FC = () => {
     }
     try {
       const res = await fetch(`/api/chat?session_id=${encodeURIComponent(sid)}`);
+      if (!res.ok) return;
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) return;
       const data = await res.json();
       if (Array.isArray(data)) {
         // Strict guard: only update messages if sid is still the currently selected session

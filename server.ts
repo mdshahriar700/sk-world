@@ -10,28 +10,31 @@ async function startServer() {
   app.use(express.json());
 
   // API router for Express backend (dev & standalone Node production)
-  app.all(["/api/*", "/telegram-webhook"], async (req, res) => {
-    try {
-      const query: Record<string, string> = {};
-      for (const [k, v] of Object.entries(req.query)) {
-        query[k] = String(v);
+  app.use(async (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path === '/telegram-webhook') {
+      try {
+        const query: Record<string, string> = {};
+        for (const [k, v] of Object.entries(req.query)) {
+          query[k] = String(v);
+        }
+
+        const headers: Record<string, string> = {};
+        for (const [k, v] of Object.entries(req.headers)) {
+          if (typeof v === 'string') headers[k] = v;
+        }
+
+        const pathStr = req.path;
+        const method = req.method;
+        const body = req.body;
+
+        const { status, data } = await handleApiRequest(pathStr, method, body, query, headers, process.env);
+        return res.status(status).json(data);
+      } catch (err: any) {
+        console.error("[Express API Error]", err);
+        return res.status(500).json({ error: err.message || "Internal server error" });
       }
-
-      const headers: Record<string, string> = {};
-      for (const [k, v] of Object.entries(req.headers)) {
-        if (typeof v === 'string') headers[k] = v;
-      }
-
-      const pathStr = req.path;
-      const method = req.method;
-      const body = req.body;
-
-      const { status, data } = await handleApiRequest(pathStr, method, body, query, headers, process.env);
-      res.status(status).json(data);
-    } catch (err: any) {
-      console.error("[Express API Error]", err);
-      res.status(500).json({ error: err.message || "Internal server error" });
     }
+    next();
   });
 
   // Vite middleware for development

@@ -91,6 +91,13 @@ export const LiveChatWidget: React.FC = () => {
     if (!sessionId) return;
     try {
       const res = await fetch(`/api/chat?session_id=${encodeURIComponent(sessionId)}`);
+      if (!res.ok) {
+        return;
+      }
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        return;
+      }
       const data = await res.json();
       if (Array.isArray(data)) {
         setMessages(data);
