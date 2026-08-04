@@ -1,7 +1,7 @@
 import { ensureDbInitialized } from './db';
+import { generateGeminiChatReply } from './gemini-chat';
 import {
   sendTelegramOrderNotification,
-  sendTelegramChatMessage,
   handleTelegramWebhookUpdate,
   setupTelegramWebhook
 } from './telegram';
@@ -448,14 +448,30 @@ export async function handleApiRequest(
           ]
         });
 
-        // If message is from customer, notify Telegram Admin Bot in background
+        let aiReplyText = '';
+        // If message is from customer, generate instant Gemini AI reply with store & Turso database context
         if (sender_type !== 'admin') {
-          sendTelegramChatMessage(session_id, sender_name || 'Customer', message, db, env, currentBaseUrl).catch(err => {
-            console.error('[Telegram Chat Async Error]', err);
-          });
+          try {
+            aiReplyText = await generateGeminiChatReply(
+              session_id,
+              message,
+              sender_name || 'Customer',
+              db,
+              env
+            );
+
+            if (aiReplyText) {
+              await db.execute({
+                sql: `INSERT INTO chat_messages (session_id, sender_type, sender_name, message, is_read) VALUES (?, 'admin', 'SK WORL AI Assistant', ?, 0)`,
+                args: [session_id, aiReplyText]
+              });
+            }
+          } catch (err) {
+            console.error('[Gemini Auto Reply Error]', err);
+          }
         }
 
-        return { status: 201, data: { success: true } };
+        return { status: 201, data: { success: true, ai_reply: aiReplyText } };
       }
 
       if (method === 'PUT') {

@@ -9,8 +9,8 @@ interface AdminLoginProps {
 
 export const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess, onCancel }) => {
   const { login } = useAuth();
-  const [email, setEmail] = useState('skbadol229229@gmail.com');
-  const [password, setPassword] = useState('Badol@138215');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -109,13 +109,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess, onCancel }) =
             </button>
           </div>
         </form>
-
-        <div className="p-3 bg-black border border-white/10 text-[10px] font-mono text-zinc-400 space-y-1">
-          <p className="font-bold text-white uppercase">MAIN ADMIN LOGIN CREDENTIALS:</p>
-          <p>Email: <strong className="text-white">skbadol229229@gmail.com</strong></p>
-          <p>Password: <strong className="text-white">Badol@138215</strong></p>
-        </div>
-
       </div>
     </div>
   );
