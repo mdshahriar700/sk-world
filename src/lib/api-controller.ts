@@ -360,15 +360,16 @@ export async function handleApiRequest(
       }
 
       if (method === 'POST') {
-        const { name, role, review, rating, avatar_url, is_visible } = body;
+        const { name, role, location, review, rating, avatar_url, is_visible } = body;
         if (!name || !review) {
           return { status: 400, data: { error: 'Name and Review content are required' } };
         }
         const res = await db.execute({
-          sql: `INSERT INTO testimonials (name, role, review, rating, avatar_url, is_visible) VALUES (?, ?, ?, ?, ?, ?)`,
+          sql: `INSERT INTO testimonials (name, role, location, review, rating, avatar_url, is_visible) VALUES (?, ?, ?, ?, ?, ?, ?)`,
           args: [
             name,
             role || '',
+            location || '',
             review,
             Number(rating) || 5,
             avatar_url || '',
@@ -380,12 +381,13 @@ export async function handleApiRequest(
 
       if (method === 'PUT') {
         const id = parts[1] || body.id;
-        const { name, role, review, rating, avatar_url, is_visible } = body;
+        const { name, role, location, review, rating, avatar_url, is_visible } = body;
         await db.execute({
-          sql: `UPDATE testimonials SET name=?, role=?, review=?, rating=?, avatar_url=?, is_visible=? WHERE id=?`,
+          sql: `UPDATE testimonials SET name=?, role=?, location=?, review=?, rating=?, avatar_url=?, is_visible=? WHERE id=?`,
           args: [
             name,
             role || '',
+            location || '',
             review,
             Number(rating) || 5,
             avatar_url || '',

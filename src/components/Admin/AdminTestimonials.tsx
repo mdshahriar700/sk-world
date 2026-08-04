@@ -11,7 +11,8 @@ export const AdminTestimonials: React.FC = () => {
 
   const [formData, setFormData] = useState({
     name: '',
-    role: '',
+    role: 'Verified Buyer',
+    location: 'Dhaka, Bangladesh',
     review: '',
     rating: 5,
     avatar_url: '',
@@ -42,7 +43,8 @@ export const AdminTestimonials: React.FC = () => {
     setEditingItem(null);
     setFormData({
       name: '',
-      role: 'Dhaka, Bangladesh',
+      role: 'Verified Buyer',
+      location: 'Dhaka, Bangladesh',
       review: '',
       rating: 5,
       avatar_url: '',
@@ -55,7 +57,8 @@ export const AdminTestimonials: React.FC = () => {
     setEditingItem(item);
     setFormData({
       name: item.name,
-      role: item.role || '',
+      role: item.role || 'Verified Buyer',
+      location: item.location || 'Dhaka, Bangladesh',
       review: item.review,
       rating: item.rating || 5,
       avatar_url: item.avatar_url || '',
@@ -141,11 +144,11 @@ export const AdminTestimonials: React.FC = () => {
         <div>
           <div className="flex items-center space-x-2 text-[#16A34A] font-mono text-xs font-bold uppercase mb-1">
             <MessageSquare size={16} />
-            <span>Store Reviews & Feedback</span>
+            <span>Store Reviews & Infinite Marquee Engine</span>
           </div>
           <h1 className="text-xl font-extrabold text-slate-900">Manage Customer Testimonials</h1>
           <p className="text-xs text-slate-500 font-mono mt-0.5">
-            Add customer reviews, toggle visibility on storefront, and edit feedback content dynamically.
+            Add customer reviews, toggle visibility on storefront, and manage live localized feedback.
           </p>
         </div>
 
@@ -156,6 +159,26 @@ export const AdminTestimonials: React.FC = () => {
           <Plus size={16} />
           <span>Add New Review</span>
         </button>
+      </div>
+
+      {/* Stats Cards Row */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="p-4 bg-white rounded-2xl border border-slate-200">
+          <p className="text-[10px] font-bold text-slate-500 uppercase font-mono">Total Reviews</p>
+          <p className="text-xl font-extrabold text-slate-900 mt-1">{testimonials.length}</p>
+        </div>
+        <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200">
+          <p className="text-[10px] font-bold text-emerald-700 uppercase font-mono">Visible on Storefront</p>
+          <p className="text-xl font-extrabold text-emerald-900 mt-1">
+            {testimonials.filter((t) => t.is_visible).length}
+          </p>
+        </div>
+        <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200">
+          <p className="text-[10px] font-bold text-amber-700 uppercase font-mono">Hidden Reviews</p>
+          <p className="text-xl font-extrabold text-amber-900 mt-1">
+            {testimonials.filter((t) => !t.is_visible).length}
+          </p>
+        </div>
       </div>
 
       {/* Testimonials List Grid */}
@@ -211,7 +234,10 @@ export const AdminTestimonials: React.FC = () => {
                   )}
                   <div>
                     <h4 className="font-extrabold text-xs text-slate-900">{item.name}</h4>
-                    {item.role && <p className="text-[10px] text-slate-500 font-mono">{item.role}</p>}
+                    <p className="text-[10px] text-slate-500 font-mono">
+                      {item.location || item.role || 'Dhaka, Bangladesh'}
+                      {item.role && item.location ? ` • ${item.role}` : ''}
+                    </p>
                   </div>
                 </div>
 
@@ -263,15 +289,28 @@ export const AdminTestimonials: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Location / Role</label>
-                <input
-                  type="text"
-                  value={formData.role}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, role: e.target.value }))}
-                  placeholder="e.g. Dhaka, Bangladesh"
-                  className="w-full px-3 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-[#16A34A]"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Customer Location *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.location}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
+                    placeholder="e.g. Dhaka, Bangladesh"
+                    className="w-full px-3 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-[#16A34A]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Customer Badge / Role</label>
+                  <input
+                    type="text"
+                    value={formData.role}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, role: e.target.value }))}
+                    placeholder="e.g. Verified Buyer"
+                    className="w-full px-3 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-[#16A34A]"
+                  />
+                </div>
               </div>
 
               <div>

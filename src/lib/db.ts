@@ -131,6 +131,7 @@ export async function initDatabaseSchema(db: Client) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       role TEXT,
+      location TEXT,
       review TEXT NOT NULL,
       rating INTEGER DEFAULT 5,
       avatar_url TEXT,
@@ -138,6 +139,12 @@ export async function initDatabaseSchema(db: Client) {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  try {
+    await db.execute(`ALTER TABLE testimonials ADD COLUMN location TEXT;`);
+  } catch (e) {
+    // Column already exists
+  }
 
   // 8. Chat Messages
   await db.execute(`
@@ -158,34 +165,82 @@ export async function seedDefaultData(db: Client) {
   try {
     const testCheck = await db.execute('SELECT COUNT(*) as count FROM testimonials');
     const testCount = Number(testCheck.rows[0]?.count || 0);
-    if (testCount === 0) {
+    if (testCount < 6) {
+      if (testCount > 0) {
+        // Clear existing minimal seed so we can seed rich Bangladeshi reviews
+        await db.execute('DELETE FROM testimonials WHERE id <= 3');
+      }
+
       const seedTestimonials = [
         {
-          name: 'Siam Ahmed',
-          role: 'Dhaka, Bangladesh',
-          review: 'SK WORL heavyweight hoodie is absolute luxury! The 450gsm fabric fit feels like high-end European streetwear. Ordered via COD and got delivery in 24 hours.',
-          rating: 5,
-          avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'
-        },
-        {
-          name: 'Tanvir Hasan',
-          role: 'Chittagong, Bangladesh',
-          review: 'The raw edge oversized tee fitting is unmatched. True to size, premium stitching, and the fabric softness remains even after multiple washes.',
+          name: 'Tanvir Hossain',
+          role: 'Verified Buyer',
+          location: 'Dhaka, Bangladesh',
+          review: 'The 450GSM heavy oversized hoodie is elite quality. Unmatched fabric density and perfect drop shoulders. Got COD delivery in 24 hours!',
           rating: 5,
           avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200'
         },
         {
-          name: 'Nusrat Jahan',
-          role: 'Sylhet, Bangladesh',
-          review: 'Top tier streetwear brand in BD right now! Customer support via live chat helped me pick the right oversized size.',
+          name: 'Nuzhat Farhana',
+          role: 'Style Enthusiast',
+          location: 'Sylhet, Bangladesh',
+          review: 'Order delivered to Sylhet within 48 hours via COD. The raw edge tee wash quality is super premium! Color stays dark after washing.',
           rating: 5,
-          avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200'
+          avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'
+        },
+        {
+          name: 'Arifur Rahman',
+          role: 'Fashion Collector',
+          location: 'Chittagong, Bangladesh',
+          review: 'Best Bangladeshi streetwear brand hands down. The boxy fit tee hangs perfectly without shrinking or losing shape.',
+          rating: 5,
+          avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200'
+        },
+        {
+          name: 'Sabikun Nahar',
+          role: 'Verified Buyer',
+          location: 'Rajshahi, Bangladesh',
+          review: 'Amazing customer support on Live Chat. Helped me pick size L for my brother and it fits like a glove!',
+          rating: 5,
+          avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200'
+        },
+        {
+          name: 'Shakil Ahmed',
+          role: 'Repeat Customer',
+          location: 'Khulna, Bangladesh',
+          review: 'Packaging was super slick and clean. High durability stitching and rich color fastness after multiple heavy washes.',
+          rating: 5,
+          avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200'
+        },
+        {
+          name: 'Mahmudul Hasan',
+          role: 'Sneakerhead',
+          location: 'Uttara, Dhaka',
+          review: 'Loved the image-to-color selector on the product page! Received exactly what was mapped on screen.',
+          rating: 5,
+          avatar_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=200'
+        },
+        {
+          name: 'Anika Tabassum',
+          role: 'Verified Buyer',
+          location: 'Dhanmondi, Dhaka',
+          review: 'Bought two oversized hoodies for winter. Ultra cozy interior fleece and heavy ribbed cuffs that hold tight.',
+          rating: 5,
+          avatar_url: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&q=80&w=200'
+        },
+        {
+          name: 'Rashedul Islam',
+          role: 'Verified Buyer',
+          location: 'Barisal, Bangladesh',
+          review: 'Super fast order tracking with phone number. SK WORLD is setting new standards for BD streetwear.',
+          rating: 5,
+          avatar_url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=200'
         }
       ];
       for (const t of seedTestimonials) {
         await db.execute({
-          sql: 'INSERT INTO testimonials (name, role, review, rating, avatar_url, is_visible) VALUES (?, ?, ?, ?, ?, 1)',
-          args: [t.name, t.role, t.review, t.rating, t.avatar_url]
+          sql: 'INSERT INTO testimonials (name, role, location, review, rating, avatar_url, is_visible) VALUES (?, ?, ?, ?, ?, ?, 1)',
+          args: [t.name, t.role, t.location, t.review, t.rating, t.avatar_url]
         });
       }
     }

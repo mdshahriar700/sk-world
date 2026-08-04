@@ -100,6 +100,7 @@ export interface Testimonial {
   id: number;
   name: string;
   role?: string;
+  location?: string;
   review: string;
   rating: number;
   avatar_url?: string;
