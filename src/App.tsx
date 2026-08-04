@@ -13,6 +13,7 @@ import { ProductGrid } from './components/ProductGrid';
 import { SaleBanner } from './components/SaleBanner';
 import { FeatureBlocks } from './components/FeatureBlocks';
 import { Testimonials } from './components/Testimonials';
+import { TiltedBeigeBand } from './components/TiltedBeigeBand';
 import { Newsletter } from './components/Newsletter';
 import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
@@ -284,6 +285,9 @@ function MainStoreContent() {
 
       {/* Customer Testimonials Section */}
       <Testimonials />
+
+      {/* Tilted Beige Band with perspective distortion */}
+      <TiltedBeigeBand />
 
       {/* Newsletter Signup */}
       <Newsletter settings={settings} />
