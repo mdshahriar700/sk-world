@@ -317,6 +317,7 @@ function MainStoreContent() {
       <OrderTrackingModal
         isOpen={isOrderTrackingOpen}
         onClose={() => setIsOrderTrackingOpen(false)}
+        settings={settings}
       />
       <OfferPopupModal
         settings={settings}

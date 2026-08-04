@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { Search, PackageCheck, Truck, Clock, CheckCircle2, XCircle, AlertCircle, Phone, X, RefreshCw } from 'lucide-react';
-import { Order } from '../types';
+import { Order, SiteSettings } from '../types';
 import { useTheme } from '../context/ThemeContext';
 
 interface OrderTrackingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  settings?: Partial<SiteSettings>;
 }
 
-export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({ isOpen, onClose }) => {
+export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({ isOpen, onClose, settings }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const hotlinePhone = settings?.footer_phone || settings?.contact_phone || '+880 1712 345 678';
 
   const [queryInput, setQueryInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -277,7 +279,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({ isOpen, 
         <div className={`p-4 border-t flex items-center justify-between text-xs ${isDark ? 'border-white/10 bg-zinc-900/50' : 'border-zinc-200 bg-stone-50'}`}>
           <div className="flex items-center space-x-2 text-zinc-500 font-mono">
             <Phone size={14} className="text-[#16A34A]" />
-            <span>Need Help? Call 01700-000000</span>
+            <span>Need Help? Call {hotlinePhone}</span>
           </div>
           <button
             onClick={onClose}

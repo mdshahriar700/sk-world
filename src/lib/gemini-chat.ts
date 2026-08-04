@@ -30,16 +30,16 @@ export async function generateGeminiChatReply(
       },
     });
 
-    // 1. Fetch Store Settings
+    // 1. Fetch Dynamic Store Settings
     let settingsMap: Record<string, string> = {
       site_name: 'SK WORLD',
-      contact_phone: '+8801700000000',
-      contact_email: 'info@skworld.com',
+      footer_phone: '+880 1712 345 678',
+      footer_email: 'contact@skworl.com',
       delivery_charge_dhaka: '70',
       delivery_charge_outside: '130'
     };
     try {
-      const settingsRes = await db.execute('SELECT * FROM site_settings');
+      const settingsRes = await db.execute('SELECT key, value FROM site_settings');
       settingsRes.rows.forEach(r => {
         settingsMap[String(r.key)] = String(r.value);
       });
@@ -47,135 +47,110 @@ export async function generateGeminiChatReply(
       console.warn('[Gemini Chat] Failed to read site_settings', e);
     }
 
-    // 2. Fetch Active Products from Turso DB
-    let productsList: any[] = [];
-    try {
-      const productsRes = await db.execute(`
-        SELECT p.id, p.name, p.price, p.stock_quantity, p.sizes, p.colors, p.description, c.name as category_name
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-        WHERE p.is_active = 1
-        ORDER BY p.created_at DESC
-        LIMIT 50
-      `);
+    const adminPhone = settingsMap.footer_phone || settingsMap.contact_phone || settingsMap.phone || '+880 1712 345 678';
+    const adminEmail = settingsMap.footer_email || settingsMap.contact_email || settingsMap.email || 'contact@skworl.com';
 
-      productsList = productsRes.rows.map(r => ({
-        id: Number(r.id),
-        name: String(r.name),
-        price: `${Number(r.price)} BDT`,
-        category: String(r.category_name || 'General'),
-        stock: Number(r.stock_quantity),
-        sizes: String(r.sizes || ''),
-        colors: String(r.colors || ''),
-        description: String(r.description || '').substring(0, 120)
-      }));
-    } catch (e) {
-      console.warn('[Gemini Chat] Failed to read products from DB', e);
-    }
-
-    // 3. Fetch Categories
-    let categoriesList: string[] = [];
-    try {
-      const categoriesRes = await db.execute('SELECT name FROM categories ORDER BY name ASC');
-      categoriesList = categoriesRes.rows.map(r => String(r.name));
-    } catch (e) {
-      console.warn('[Gemini Chat] Failed to read categories', e);
-    }
-
-    // 4. Extract potential phone numbers or order IDs from customerMessage or customerName
+    // Extract potential phone numbers or order IDs from message & customer details
     const textToSearch = `${customerName || ''} ${customerMessage || ''}`;
-    // Find numbers (e.g. 11 digit phones or order ID digits)
     const digitMatches = textToSearch.match(/\d+/g) || [];
-    
-    // Clean phone numbers (e.g. 01712345678, 88017...)
     const phoneCandidates = digitMatches.filter(d => d.length >= 7);
     const idCandidates = digitMatches.map(d => parseInt(d, 10)).filter(n => !isNaN(n) && n > 0 && n < 1000000);
 
-    // 5. Query Turso DB for specific matching orders
-    let matchingOrders: any[] = [];
-    try {
-      let sqlConditions: string[] = [];
-      let sqlArgs: any[] = [];
+    // Analyze intent to optimize database queries
+    const lowerMsg = customerMessage.toLowerCase();
+    const isOrderIntent = /order|track|status|delivery|ship|parcel|id|আইডি|অর্ডার|ডেলিভারি|কুরিয়ার|অবস্থা|পাব/i.test(customerMessage) || phoneCandidates.length > 0 || idCandidates.length > 0;
+    const isProductIntent = /product|item|hoodie|shirt|jacket|price|cost|size|stock|color|buy|collection|দাম|সাইজ|স্টক|পণ্য|কালেকশন|টিশার্ট/i.test(customerMessage);
 
-      // Email or Name condition (orders table has customer_name, phone, address, items, subtotal, status, created_at)
-      if (customerEmail && customerEmail.includes('@')) {
-        sqlConditions.push(`customer_name LIKE ?`);
-        sqlArgs.push(`%${customerEmail.trim()}%`);
-      }
-
-      // Phone condition
-      if (phoneCandidates.length > 0) {
-        phoneCandidates.forEach(phone => {
-          const cleanPhone = phone.slice(-10);
-          sqlConditions.push(`phone LIKE ?`);
-          sqlArgs.push(`%${cleanPhone}%`);
-        });
-      }
-
-      // Order ID condition
-      if (idCandidates.length > 0) {
-        idCandidates.forEach(orderId => {
-          sqlConditions.push(`id = ?`);
-          sqlArgs.push(orderId);
-        });
-      }
-
-      // Name condition if non-empty
-      if (customerName && customerName.length > 2 && customerName !== 'Customer') {
-        sqlConditions.push(`customer_name LIKE ?`);
-        sqlArgs.push(`%${customerName}%`);
-      }
-
-      if (sqlConditions.length > 0) {
-        const query = `
-          SELECT id, customer_name, phone, address, items, subtotal, status, created_at 
-          FROM orders 
-          WHERE ${sqlConditions.join(' OR ')}
-          ORDER BY created_at DESC 
-          LIMIT 10
-        `;
-        const orderRes = await db.execute({ sql: query, args: sqlArgs });
-        matchingOrders = orderRes.rows.map(r => ({
-          order_id: `#${r.id}`,
-          customer_name: String(r.customer_name),
-          phone: String(r.phone),
-          address: String(r.address),
-          items: String(r.items),
-          subtotal: `${Number(r.subtotal)} BDT`,
-          status: String(r.status || 'pending').toUpperCase(),
-          date: String(r.created_at)
-        }));
-      }
-
-      // Always fetch last 10 overall orders for general context
-      if (matchingOrders.length === 0) {
-        const recentOrdersRes = await db.execute(`
-          SELECT id, customer_name, phone, address, items, subtotal, status, created_at 
-          FROM orders 
-          ORDER BY created_at DESC 
-          LIMIT 10
+    // 2. Conditional Fetch: Active Products (only lightweight summary of top products)
+    let productsList: any[] = [];
+    if (isProductIntent || lowerMsg.length < 25) {
+      try {
+        const productsRes = await db.execute(`
+          SELECT p.id, p.name, p.price, p.stock_quantity, p.sizes, p.colors, c.name as category_name
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE p.is_active = 1
+          ORDER BY p.created_at DESC
+          LIMIT 15
         `);
-        matchingOrders = recentOrdersRes.rows.map(r => ({
-          order_id: `#${r.id}`,
-          customer_name: String(r.customer_name),
-          phone: String(r.phone),
-          address: String(r.address),
-          items: String(r.items),
-          subtotal: `${Number(r.subtotal)} BDT`,
-          status: String(r.status || 'pending').toUpperCase(),
-          date: String(r.created_at)
+
+        productsList = productsRes.rows.map(r => ({
+          id: Number(r.id),
+          name: String(r.name),
+          price: `${Number(r.price)} BDT`,
+          category: String(r.category_name || 'General'),
+          stock: Number(r.stock_quantity) > 0 ? 'In Stock' : 'Out of Stock',
+          sizes: String(r.sizes || ''),
+          colors: String(r.colors || '')
         }));
+      } catch (e) {
+        console.warn('[Gemini Chat] Failed to read products from DB', e);
       }
-    } catch (e) {
-      console.warn('[Gemini Chat] Failed to read orders from Turso DB', e);
     }
 
-    // 6. Fetch recent chat history for context (last 10 messages)
+    // 3. Conditional Fetch: Matching Orders (only when order intent or candidate digits are present)
+    let matchingOrders: any[] = [];
+    if (isOrderIntent) {
+      try {
+        let sqlConditions: string[] = [];
+        let sqlArgs: any[] = [];
+
+        if (customerEmail && customerEmail.includes('@')) {
+          sqlConditions.push(`customer_name LIKE ?`);
+          sqlArgs.push(`%${customerEmail.trim()}%`);
+        }
+
+        if (phoneCandidates.length > 0) {
+          phoneCandidates.forEach(phone => {
+            const cleanPhone = phone.slice(-10);
+            sqlConditions.push(`phone LIKE ?`);
+            sqlArgs.push(`%${cleanPhone}%`);
+          });
+        }
+
+        if (idCandidates.length > 0) {
+          idCandidates.forEach(orderId => {
+            sqlConditions.push(`id = ?`);
+            sqlArgs.push(orderId);
+          });
+        }
+
+        if (customerName && customerName.length > 2 && customerName !== 'Customer') {
+          sqlConditions.push(`customer_name LIKE ?`);
+          sqlArgs.push(`%${customerName}%`);
+        }
+
+        if (sqlConditions.length > 0) {
+          const query = `
+            SELECT id, customer_name, phone, address, items, subtotal, status, created_at 
+            FROM orders 
+            WHERE ${sqlConditions.join(' OR ')}
+            ORDER BY created_at DESC 
+            LIMIT 5
+          `;
+          const orderRes = await db.execute({ sql: query, args: sqlArgs });
+          matchingOrders = orderRes.rows.map(r => ({
+            order_id: `#${r.id}`,
+            customer_name: String(r.customer_name),
+            phone: String(r.phone),
+            address: String(r.address),
+            items: String(r.items),
+            subtotal: `${Number(r.subtotal)} BDT`,
+            status: String(r.status || 'pending').toUpperCase(),
+            date: String(r.created_at)
+          }));
+        }
+      } catch (e) {
+        console.warn('[Gemini Chat] Failed to read orders from Turso DB', e);
+      }
+    }
+
+    // 4. Fetch recent chat history for session context (last 8 messages)
     let historyText = '';
     let hasPriorHistory = false;
     try {
       const historyRes = await db.execute({
-        sql: `SELECT sender_type, sender_name, message FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC LIMIT 10`,
+        sql: `SELECT sender_type, sender_name, message FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC LIMIT 8`,
         args: [sessionId]
       });
 
@@ -190,53 +165,46 @@ export async function generateGeminiChatReply(
       console.warn('[Gemini Chat] Failed to read history', e);
     }
 
-    // System prompt with Full Database Knowledge
+    // System prompt with [DATABASE_CONTEXT] & strict contact rules
     const systemInstruction = `
-You are the warm, cordial, helpful AI Customer Support Representative for "SK WORLD" (a top fashion e-commerce store in Bangladesh).
+You are the polite, respectful, helpful AI Customer Support Representative for "SK WORLD" (a top fashion e-commerce brand in Bangladesh).
 
 CURRENT CUSTOMER PROFILE:
-- Name: ${customerName || 'Customer'}
-- Email: ${customerEmail || 'Not provided'}
+- Customer Name: ${customerName || 'Customer'}
+- Customer Email: ${customerEmail || 'Not provided'}
 
-TURSO DATABASE KNOWLEDGE BASE:
+[DATABASE_CONTEXT]
+STORE CONFIGURATION & CONTACT INFO:
+- Brand Name: ${settingsMap.logo_text || settingsMap.site_name || 'SK WORLD'}
+- Admin Support Phone: ${adminPhone}
+- Admin Support Email: ${adminEmail}
+- Delivery Fee (Dhaka): ${settingsMap.delivery_charge_dhaka || '70'} BDT
+- Delivery Fee (Outside Dhaka): ${settingsMap.delivery_charge_outside || '130'} BDT
+- Payment Options: Cash on Delivery (COD) nationwide across Bangladesh
+- Exchange Policy: Easy 7-day size exchange
 
-1. STORE INFORMATION & POLICIES:
-- Brand Name: ${settingsMap.site_name || 'SK WORLD'}
-- Contact Phone: ${settingsMap.contact_phone || settingsMap.phone || '+8801700000000'}
-- Contact Email: ${settingsMap.contact_email || settingsMap.email || 'info@skworld.com'}
-- Delivery Charges: Inside Dhaka: ${settingsMap.delivery_charge_dhaka || '70'} BDT, Outside Dhaka: ${settingsMap.delivery_charge_outside || '130'} BDT.
-- Payment Methods: Cash on Delivery (COD), bkash/Nagad available upon request.
-- Delivery Time: 2-3 days inside Dhaka, 3-5 days outside Dhaka.
-- Exchange/Return Policy: Easy 7-day exchange for size issues or product defects.
+PRODUCT CATALOG SNAPSHOT:
+${productsList.length > 0 ? JSON.stringify(productsList, null, 2) : 'No products requested or matched'}
 
-2. PRODUCT CATALOG (FETCHED REAL-TIME FROM TURSO DB):
-${productsList.length > 0 ? JSON.stringify(productsList, null, 2) : 'No products found'}
+CUSTOMER ORDERS MATCHING QUERY:
+${matchingOrders.length > 0 ? JSON.stringify(matchingOrders, null, 2) : 'No matching order found for this query'}
 
-3. ORDERS IN DATABASE (FETCHED REAL-TIME FROM TURSO DB):
-${matchingOrders.length > 0 ? JSON.stringify(matchingOrders, null, 2) : 'No specific matching orders found in DB'}
+CRITICAL RULES:
+1. STRICT CONTACT INFO RULE:
+   Whenever asked for contact info (phone number, hotline, admin email, address), strictly provide the Admin Support Phone (${adminPhone}) and Admin Support Email (${adminEmail}) from the [DATABASE_CONTEXT] above. NEVER invent, fabricate, or hallucinate any demo numbers, fake emails, or external contact details.
 
-CRITICAL CONVERSATION & GREETING RULES:
-1. GREETING RULE:
+2. GREETING RULE:
    ${hasPriorHistory 
-      ? 'CRITICAL: Since this is an ONGOING conversation with prior messages, DO NOT say "Assalamu Alaikum", "Hello", "Welcome to SK WORLD", or any introductory greetings. Jump straight to answering the user\'s question directly and cordially.'
-      : 'This is the FIRST message from the customer. Greet them warmly once with "আসসালামু আলাইকুম!" or "Hello!", using their name if provided.'}
+      ? 'CRITICAL: Since this is an ONGOING conversation with prior messages, DO NOT say "Assalamu Alaikum", "Hello", "Welcome to SK WORLD", or any introductory greetings. Jump straight to answering the user\'s question directly.'
+      : 'This is the FIRST message from the customer. Greet them warmly once with "আসসালামু আলাইকুম!" or "Hello!", using their name if available.'}
 
-2. ORDER TRACKING:
-   - When customer asks about their order or provides a phone number / Order ID / Email, check the "ORDERS IN DATABASE" list above.
-   - If an order matches, provide complete, accurate details (Order ID, Status, Items, Subtotal, Address).
+3. ORDER TRACKING:
    - Status translation: PENDING = প্রসেসিং এ আছে, SHIPPED = কুরিয়ারে পাঠানো হয়েছে, DELIVERED = ডেলিভারি সম্পন্ন হয়েছে, CANCELLED = বাতিল হয়েছে.
-   - If no matching order is found, ask them kindly to check their phone number, email, or order ID.
+   - If an order matches in CUSTOMER ORDERS MATCHING QUERY, provide exact Order ID, Status, Items, and Total.
 
-3. TONE & LANGUAGE:
-   - Extremely polite, respectful, and friendly ("অত্যন্ত আন্তরিক ও শালীন").
-   - Match the language:
-     * Bangla input -> clear, elegant Bangla response.
-     * Banglish input -> natural Banglish or clean Bangla response.
-     * English input -> courteous English response.
-
-4. FORMATTING:
-   - Clean spacing, clear bullet points for list of items/details.
-   - No code or raw JSON blocks.
+4. TONE & LANGUAGE:
+   - Match customer language (Bangla, Banglish, or English).
+   - Polite, natural, and concise.
 `.trim();
 
     const fullPrompt = [

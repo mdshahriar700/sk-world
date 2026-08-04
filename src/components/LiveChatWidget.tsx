@@ -277,7 +277,7 @@ export const LiveChatWidget: React.FC = () => {
                     type="text"
                     value={inputName}
                     onChange={(e) => setInputName(e.target.value)}
-                    placeholder="e.g. Badol SK"
+                    placeholder="Enter your full name"
                     required
                     className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none transition-all ${
                       isDark
@@ -295,7 +295,7 @@ export const LiveChatWidget: React.FC = () => {
                     type="email"
                     value={inputEmail}
                     onChange={(e) => setInputEmail(e.target.value)}
-                    placeholder="e.g. badol@gmail.com"
+                    placeholder="Enter your email address"
                     required
                     className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none transition-all ${
                       isDark
