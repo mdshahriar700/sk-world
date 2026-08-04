@@ -17,6 +17,7 @@ export interface Product {
   images: string[];
   sizes: string[];
   colors: string[];
+  image_colors?: Record<string, string>;
   stock_quantity: number;
   is_featured: boolean;
   is_trending: boolean;

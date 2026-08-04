@@ -23,8 +23,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
   useEffect(() => {
     if (product) {
       setSelectedImageIndex(0);
-      setSelectedSize(Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes[0] : 'M');
-      setSelectedColor(Array.isArray(product.colors) && product.colors.length > 0 ? product.colors[0] : 'Black');
+      const initialSizes = Array.isArray(product.sizes) ? product.sizes : [];
+      const initialColors = Array.isArray(product.colors) ? product.colors : [];
+      setSelectedSize(initialSizes[0] || '');
+      setSelectedColor(initialColors[0] || '');
       setQuantity(1);
     }
   }, [product]);
@@ -36,11 +38,38 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
   const images = Array.isArray(product.images) && product.images.length > 0
     ? product.images
     : ['https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=800'];
-  const sizes = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : ['S', 'M', 'L', 'XL'];
-  const colors = Array.isArray(product.colors) && product.colors.length > 0 ? product.colors : ['Black'];
+  const sizes = Array.isArray(product.sizes) ? product.sizes : [];
+  const colors = Array.isArray(product.colors) ? product.colors : [];
 
   const isOutOfStock = product.stock_quantity <= 0;
   const currentImg = images[selectedImageIndex] || images[0];
+
+  const handleSelectColor = (clr: string) => {
+    setSelectedColor(clr);
+    if (product?.image_colors) {
+      const mappedIdx = images.findIndex((img) => {
+        const mappedColor = product.image_colors?.[img];
+        return mappedColor && mappedColor.trim().toLowerCase() === clr.trim().toLowerCase();
+      });
+      if (mappedIdx !== -1) {
+        setSelectedImageIndex(mappedIdx);
+      }
+    }
+  };
+
+  const handleSelectThumbnail = (idx: number) => {
+    setSelectedImageIndex(idx);
+    const targetImg = images[idx];
+    if (targetImg && product?.image_colors?.[targetImg]) {
+      const mappedColor = product.image_colors[targetImg];
+      const matchInColors = colors.find((c) => c.trim().toLowerCase() === mappedColor.trim().toLowerCase());
+      if (matchInColors) {
+        setSelectedColor(matchInColors);
+      } else {
+        setSelectedColor(mappedColor);
+      }
+    }
+  };
 
   const handleAdd = () => {
     if (isOutOfStock) return;
@@ -103,19 +132,28 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
               {/* Thumbnails */}
               {images.length > 1 && (
                 <div className="flex gap-2 overflow-x-auto pb-1 justify-center sm:justify-start">
-                  {images.map((img, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedImageIndex(idx)}
-                      className={`w-12 h-16 sm:w-16 sm:h-20 border overflow-hidden transition-all shrink-0 ${
-                        selectedImageIndex === idx
-                          ? isDark ? 'border-2 border-white opacity-100' : 'border-2 border-black opacity-100'
-                          : isDark ? 'border-white/20 opacity-50 hover:opacity-100' : 'border-zinc-300 opacity-60 hover:opacity-100'
-                      }`}
-                    >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
+                  {images.map((img, idx) => {
+                    const mappedColor = product.image_colors?.[img];
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleSelectThumbnail(idx)}
+                        className={`relative w-12 h-16 sm:w-16 sm:h-20 border overflow-hidden transition-all shrink-0 group ${
+                          selectedImageIndex === idx
+                            ? isDark ? 'border-2 border-white opacity-100 shadow-md' : 'border-2 border-black opacity-100 shadow-md'
+                            : isDark ? 'border-white/20 opacity-60 hover:opacity-100' : 'border-zinc-300 opacity-60 hover:opacity-100'
+                        }`}
+                        title={mappedColor ? `Color: ${mappedColor}` : `Image ${idx + 1}`}
+                      >
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                        {mappedColor && (
+                          <span className="absolute bottom-0 inset-x-0 bg-black/80 text-white text-[8px] font-mono font-bold uppercase py-0.5 px-0.5 truncate text-center">
+                            {mappedColor}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -150,7 +188,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
                     <span className={`font-mono text-xs font-bold uppercase block tracking-wider ${
                       isDark ? 'text-zinc-300' : 'text-zinc-700'
                     }`}>
-                      SELECT SIZE: <span className="font-extrabold">{selectedSize}</span>
+                      SELECT SIZE: <span className="font-extrabold">{selectedSize || 'Standard'}</span>
                     </span>
                     <div className="flex flex-wrap gap-1.5 sm:gap-2">
                       {sizes.map((sz) => (
@@ -180,14 +218,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
                     <span className={`font-mono text-xs font-bold uppercase block tracking-wider ${
                       isDark ? 'text-zinc-300' : 'text-zinc-700'
                     }`}>
-                      SELECT COLOR: <span className="font-extrabold">{selectedColor}</span>
+                      SELECT COLOR: <span className="font-extrabold">{selectedColor || 'Default'}</span>
                     </span>
                     <div className="flex flex-wrap gap-1.5 sm:gap-2">
                       {colors.map((clr) => (
                         <button
                           key={clr}
-                          onClick={() => setSelectedColor(clr)}
-                          className={`px-3 py-1.5 font-mono text-xs uppercase border transition-all ${
+                          onClick={() => handleSelectColor(clr)}
+                          className={`px-3 py-1.5 font-mono text-xs uppercase border transition-all flex items-center space-x-1.5 ${
                             selectedColor === clr
                               ? isDark
                                 ? 'bg-white text-black border-white font-black'
@@ -197,7 +235,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
                               : 'bg-white text-zinc-700 border-zinc-300 hover:border-black'
                           }`}
                         >
-                          {clr}
+                          <span>{clr}</span>
                         </button>
                       ))}
                     </div>

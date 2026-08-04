@@ -70,6 +70,7 @@ export async function initDatabaseSchema(db: Client) {
       images TEXT NOT NULL,
       sizes TEXT NOT NULL,
       colors TEXT NOT NULL,
+      image_colors TEXT,
       stock_quantity INTEGER DEFAULT 10,
       is_featured INTEGER DEFAULT 0,
       is_trending INTEGER DEFAULT 0,
@@ -77,6 +78,12 @@ export async function initDatabaseSchema(db: Client) {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  try {
+    await db.execute(`ALTER TABLE products ADD COLUMN image_colors TEXT;`);
+  } catch (e) {
+    // Column already exists
+  }
 
   // 3. Orders
   await db.execute(`

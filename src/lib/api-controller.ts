@@ -97,18 +97,19 @@ export async function handleApiRequest(
       }
 
       if (method === 'POST') {
-        const { name, slug, description, price, category_id, images, sizes, colors, stock_quantity, is_featured, is_trending, is_active } = body;
+        const { name, slug, description, price, category_id, images, sizes, colors, image_colors, stock_quantity, is_featured, is_trending, is_active } = body;
         const finalSlug = slug || generateSlug(name);
         const imagesJson = JSON.stringify(Array.isArray(images) ? images : []);
-        const sizesJson = JSON.stringify(Array.isArray(sizes) ? sizes : ['S', 'M', 'L', 'XL']);
-        const colorsJson = JSON.stringify(Array.isArray(colors) ? colors : ['Black']);
+        const sizesJson = JSON.stringify(Array.isArray(sizes) ? sizes : []);
+        const colorsJson = JSON.stringify(Array.isArray(colors) ? colors : []);
+        const imageColorsJson = JSON.stringify(image_colors && typeof image_colors === 'object' ? image_colors : {});
 
         const res = await db.execute({
-          sql: `INSERT INTO products (name, slug, description, price, category_id, images, sizes, colors, stock_quantity, is_featured, is_trending, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          sql: `INSERT INTO products (name, slug, description, price, category_id, images, sizes, colors, image_colors, stock_quantity, is_featured, is_trending, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           args: [
             name, finalSlug, description || '', Number(price) || 0, Number(category_id) || 1,
-            imagesJson, sizesJson, colorsJson, Number(stock_quantity) || 0,
+            imagesJson, sizesJson, colorsJson, imageColorsJson, Number(stock_quantity) || 0,
             is_featured ? 1 : 0, is_trending ? 1 : 0, is_active !== false ? 1 : 0
           ]
         });
@@ -120,16 +121,17 @@ export async function handleApiRequest(
         const id = parts[1] || body.id;
         if (!id) return { status: 400, data: { error: 'Product ID required' } };
 
-        const { name, slug, description, price, category_id, images, sizes, colors, stock_quantity, is_featured, is_trending, is_active } = body;
+        const { name, slug, description, price, category_id, images, sizes, colors, image_colors, stock_quantity, is_featured, is_trending, is_active } = body;
         const imagesJson = JSON.stringify(Array.isArray(images) ? images : []);
-        const sizesJson = JSON.stringify(Array.isArray(sizes) ? sizes : ['S', 'M', 'L', 'XL']);
-        const colorsJson = JSON.stringify(Array.isArray(colors) ? colors : ['Black']);
+        const sizesJson = JSON.stringify(Array.isArray(sizes) ? sizes : []);
+        const colorsJson = JSON.stringify(Array.isArray(colors) ? colors : []);
+        const imageColorsJson = JSON.stringify(image_colors && typeof image_colors === 'object' ? image_colors : {});
 
         await db.execute({
-          sql: `UPDATE products SET name=?, slug=?, description=?, price=?, category_id=?, images=?, sizes=?, colors=?, stock_quantity=?, is_featured=?, is_trending=?, is_active=? WHERE id=?`,
+          sql: `UPDATE products SET name=?, slug=?, description=?, price=?, category_id=?, images=?, sizes=?, colors=?, image_colors=?, stock_quantity=?, is_featured=?, is_trending=?, is_active=? WHERE id=?`,
           args: [
             name, slug, description, Number(price), Number(category_id),
-            imagesJson, sizesJson, colorsJson, Number(stock_quantity),
+            imagesJson, sizesJson, colorsJson, imageColorsJson, Number(stock_quantity),
             is_featured ? 1 : 0, is_trending ? 1 : 0, is_active ? 1 : 0,
             Number(id)
           ]
@@ -641,6 +643,7 @@ function formatProductRow(row: any): Product {
     images: typeof row.images === 'string' ? safeJsonParse(row.images, []) : (row.images || []),
     sizes: typeof row.sizes === 'string' ? safeJsonParse(row.sizes, []) : (row.sizes || []),
     colors: typeof row.colors === 'string' ? safeJsonParse(row.colors, []) : (row.colors || []),
+    image_colors: typeof row.image_colors === 'string' ? safeJsonParse(row.image_colors, {}) : (row.image_colors || {}),
     stock_quantity: Number(row.stock_quantity),
     is_featured: Boolean(row.is_featured),
     is_trending: Boolean(row.is_trending),

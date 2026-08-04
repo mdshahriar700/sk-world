@@ -17,6 +17,8 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, categori
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
+  const [newSizeInput, setNewSizeInput] = useState('');
+  const [newColorInput, setNewColorInput] = useState('');
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.slug.toLowerCase().includes(searchTerm.toLowerCase());
@@ -34,16 +36,26 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, categori
       images: ['https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=800'],
       sizes: ['S', 'M', 'L', 'XL'],
       colors: ['Black', 'Off White'],
+      image_colors: {},
       stock_quantity: 20,
       is_featured: true,
       is_trending: false,
       is_active: true,
     });
+    setNewSizeInput('');
+    setNewColorInput('');
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (p: Product) => {
-    setEditingProduct({ ...p });
+    setEditingProduct({
+      ...p,
+      sizes: Array.isArray(p.sizes) ? p.sizes : ['S', 'M', 'L', 'XL'],
+      colors: Array.isArray(p.colors) ? p.colors : ['Black'],
+      image_colors: p.image_colors && typeof p.image_colors === 'object' ? { ...p.image_colors } : {}
+    });
+    setNewSizeInput('');
+    setNewColorInput('');
     setIsModalOpen(true);
   };
 
@@ -85,10 +97,67 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, categori
   };
 
   const handleRemoveImage = (index: number) => {
+    setEditingProduct((prev) => {
+      const targetImg = prev?.images?.[index];
+      const newImages = (prev?.images || []).filter((_, i) => i !== index);
+      const newImgColors = { ...(prev?.image_colors || {}) };
+      if (targetImg && newImgColors[targetImg]) {
+        delete newImgColors[targetImg];
+      }
+      return { ...prev, images: newImages, image_colors: newImgColors };
+    });
+  };
+
+  const handleAddSize = (val?: string) => {
+    const sizeToAdd = (val || newSizeInput).trim();
+    if (!sizeToAdd) return;
+    setEditingProduct((prev) => {
+      const existing = prev?.sizes || [];
+      if (existing.includes(sizeToAdd)) return prev;
+      return { ...prev, sizes: [...existing, sizeToAdd] };
+    });
+    setNewSizeInput('');
+  };
+
+  const handleRemoveSize = (sizeStr: string) => {
     setEditingProduct((prev) => ({
       ...prev,
-      images: (prev?.images || []).filter((_, i) => i !== index),
+      sizes: (prev?.sizes || []).filter((s) => s !== sizeStr),
     }));
+  };
+
+  const handleAddColor = (val?: string) => {
+    const colorToAdd = (val || newColorInput).trim();
+    if (!colorToAdd) return;
+    setEditingProduct((prev) => {
+      const existing = prev?.colors || [];
+      if (existing.includes(colorToAdd)) return prev;
+      return { ...prev, colors: [...existing, colorToAdd] };
+    });
+    setNewColorInput('');
+  };
+
+  const handleRemoveColor = (colorStr: string) => {
+    setEditingProduct((prev) => {
+      const newColors = (prev?.colors || []).filter((c) => c !== colorStr);
+      const newImgColors = { ...(prev?.image_colors || {}) };
+      Object.keys(newImgColors).forEach((k) => {
+        if (newImgColors[k] === colorStr) delete newImgColors[k];
+      });
+      return { ...prev, colors: newColors, image_colors: newImgColors };
+    });
+  };
+
+  const handleMapImageColor = (imgUrl: string, colorName: string) => {
+    setEditingProduct((prev) => {
+      const updatedMap = { ...(prev?.image_colors || {}) };
+      if (!colorName) {
+        delete updatedMap[imgUrl];
+      } else {
+        updatedMap[imgUrl] = colorName;
+      }
+      return { ...prev, image_colors: updatedMap };
+    });
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -351,30 +420,205 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, categori
                 />
               </div>
 
-              {/* Product Images Upload */}
-              <div className="space-y-2">
-                <label className="block text-slate-600 font-semibold">Product Images</label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {(editingProduct.images || []).map((img, idx) => (
-                    <div key={idx} className="relative w-16 h-16 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 group">
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+              {/* Dynamic Sizes Configuration */}
+              <div className="space-y-2 border-t border-slate-100 pt-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-700 font-bold">Dynamic Sizes</label>
+                  <span className="text-[10px] text-slate-400 font-mono">e.g. S, M, L, XL, XXL</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 min-h-[32px]">
+                  {(editingProduct.sizes || []).map((sz) => (
+                    <span
+                      key={sz}
+                      className="inline-flex items-center space-x-1 bg-slate-100 border border-slate-300 text-slate-800 font-bold px-2.5 py-1 rounded-lg text-xs"
+                    >
+                      <span>{sz}</span>
                       <button
                         type="button"
-                        onClick={() => handleRemoveImage(idx)}
-                        className="absolute inset-0 bg-red-600/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleRemoveSize(sz)}
+                        className="text-slate-400 hover:text-red-600 ml-1"
                       >
-                        <Trash2 size={14} />
+                        <X size={12} />
                       </button>
-                    </div>
+                    </span>
                   ))}
+                  {(editingProduct.sizes || []).length === 0 && (
+                    <span className="text-slate-400 italic text-[11px]">No sizes added yet</span>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-3 py-2 rounded-xl border border-slate-200 inline-flex items-center space-x-2">
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={newSizeInput}
+                    onChange={(e) => setNewSizeInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddSize();
+                      }
+                    }}
+                    placeholder="Type size name (e.g. XL or 32)"
+                    className="flex-1 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A] focus:bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddSize()}
+                    className="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-3 py-1.5 rounded-xl text-xs transition-colors shrink-0"
+                  >
+                    + Add Size
+                  </button>
+                </div>
+
+                {/* Size Presets */}
+                <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 pt-1 overflow-x-auto">
+                  <span className="font-semibold text-slate-500">Quick Presets:</span>
+                  {['S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', 'Free Size'].map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => handleAddSize(p)}
+                      className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-mono"
+                    >
+                      +{p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Dynamic Colors Configuration */}
+              <div className="space-y-2 border-t border-slate-100 pt-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-700 font-bold">Dynamic Colors</label>
+                  <span className="text-[10px] text-slate-400 font-mono">e.g. Navy, Red, Washed Black</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 min-h-[32px]">
+                  {(editingProduct.colors || []).map((clr) => (
+                    <span
+                      key={clr}
+                      className="inline-flex items-center space-x-1 bg-slate-900 border border-slate-700 text-white font-bold px-2.5 py-1 rounded-lg text-xs shadow-sm"
+                    >
+                      <span>{clr}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveColor(clr)}
+                        className="text-slate-400 hover:text-red-400 ml-1"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                  {(editingProduct.colors || []).length === 0 && (
+                    <span className="text-slate-400 italic text-[11px]">No colors added yet</span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={newColorInput}
+                    onChange={(e) => setNewColorInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddColor();
+                      }
+                    }}
+                    placeholder="Type color name (e.g. Navy Blue or Olive)"
+                    className="flex-1 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-slate-900 focus:outline-none focus:border-[#16A34A] focus:bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddColor()}
+                    className="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-3 py-1.5 rounded-xl text-xs transition-colors shrink-0"
+                  >
+                    + Add Color
+                  </button>
+                </div>
+              </div>
+
+              {/* Product Images & Image-to-Color Mapping */}
+              <div className="space-y-3 border-t border-slate-100 pt-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-700 font-bold">Product Images & Image-to-Color Mapping</label>
+                  <span className="text-[10px] text-slate-400">Map each image to a specific color variant</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto p-1">
+                  {(editingProduct.images || []).map((img, idx) => {
+                    const mappedColor = editingProduct.image_colors?.[img] || '';
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center space-x-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xl relative group"
+                      >
+                        <div className="relative w-16 h-20 rounded-lg border border-slate-200 overflow-hidden bg-slate-200 shrink-0">
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                          {mappedColor && (
+                            <span className="absolute bottom-0 inset-x-0 bg-black/80 text-white text-[9px] font-bold py-0.5 text-center truncate px-1">
+                              {mappedColor}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                          <p className="text-[10px] text-slate-400 font-mono truncate">{img}</p>
+                          <div>
+                            <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">
+                              Mapped Color Variant:
+                            </label>
+                            <select
+                              value={mappedColor}
+                              onChange={(e) => handleMapImageColor(img, e.target.value)}
+                              className="w-full bg-white border border-slate-200 px-2 py-1 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#16A34A] font-semibold"
+                            >
+                              <option value="">-- No Color Mapped --</option>
+                              {(editingProduct.colors || []).map((clr) => (
+                                <option key={clr} value={clr}>
+                                  {clr}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className="text-slate-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Remove Image"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Upload or Add Image URL */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+                  <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-3 py-2 rounded-xl border border-slate-200 inline-flex items-center justify-center space-x-2 shrink-0">
                     <Upload size={14} />
-                    <span>{uploading ? 'Uploading...' : 'Upload Image from Device'}</span>
+                    <span>{uploading ? 'Uploading...' : 'Upload Image File'}</span>
                     <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" disabled={uploading} />
                   </label>
+
+                  <div className="flex items-center gap-1 flex-1">
+                    <input
+                      type="text"
+                      value={newImageUrl}
+                      onChange={(e) => setNewImageUrl(e.target.value)}
+                      placeholder="Or paste image URL (https://...)"
+                      className="flex-1 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#16A34A] focus:bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddImageUrl}
+                      className="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-3 py-2 rounded-xl text-xs shrink-0"
+                    >
+                      + Add URL
+                    </button>
+                  </div>
                 </div>
               </div>
 
