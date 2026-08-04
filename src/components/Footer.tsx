@@ -7,7 +7,7 @@ interface FooterProps {
   categories: Category[];
   settings: Partial<SiteSettings>;
   onSelectCategory: (slug: string) => void;
-  onOpenAdmin: () => void;
+  onOpenAdmin?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ categories, settings, onSelectCategory }) => {

@@ -83,18 +83,29 @@ function MainStoreContent() {
 
   // Fetch Store Data
   const fetchData = async () => {
+    const safeFetch = async (url: string) => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        return await res.json();
+      } catch (e) {
+        console.error(`Error fetching ${url}:`, e);
+        return null;
+      }
+    };
+
     try {
       const [catRes, prodRes, setRes, ordRes, subRes] = await Promise.all([
-        fetch('/api/categories').then((r) => r.json()),
-        fetch('/api/products').then((r) => r.json()),
-        fetch('/api/settings').then((r) => r.json()),
-        fetch('/api/orders').then((r) => r.json()),
-        fetch('/api/subscribers').then((r) => r.json()),
+        safeFetch('/api/categories'),
+        safeFetch('/api/products'),
+        safeFetch('/api/settings'),
+        safeFetch('/api/orders'),
+        safeFetch('/api/subscribers'),
       ]);
 
       if (Array.isArray(catRes)) setCategories(catRes);
       if (Array.isArray(prodRes)) setProducts(prodRes);
-      if (typeof setRes === 'object' && !setRes.error) setSettings(setRes);
+      if (setRes && typeof setRes === 'object' && !setRes.error) setSettings(setRes);
       if (Array.isArray(ordRes)) setOrders(ordRes);
       if (Array.isArray(subRes)) setSubscribers(subRes);
     } catch (err) {

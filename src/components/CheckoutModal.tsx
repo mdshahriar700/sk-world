@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, ShieldCheck, ArrowRight, Package, Truck, CreditCard } from 'lucide-react';
+import { X, CheckCircle, ShieldCheck, ArrowRight, Package, Truck, CreditCard, Tag, Percent } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { OrderItem } from '../types';
 import { formatPrice } from '../lib/format';
@@ -17,11 +17,73 @@ export const CheckoutModal: React.FC = () => {
   const [error, setError] = useState('');
   const [orderSuccess, setOrderSuccess] = useState<any | null>(null);
 
+  // Promo Code State
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [freeDeliveryApplied, setFreeDeliveryApplied] = useState<boolean>(false);
+  const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   if (!isCheckoutOpen) return null;
 
   const isDark = theme === 'dark';
-  const deliveryFee = deliveryZone === 'inside_dhaka' ? 80 : 150;
-  const grandTotal = subtotal + deliveryFee;
+  const rawDeliveryFee = deliveryZone === 'inside_dhaka' ? 80 : 150;
+  const deliveryFee = freeDeliveryApplied ? 0 : rawDeliveryFee;
+  const grandTotal = Math.max(0, subtotal - discountAmount) + deliveryFee;
+
+  const handleApplyPromo = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPromoMessage(null);
+    const code = promoInput.trim().toUpperCase();
+
+    if (!code) return;
+
+    if (code === 'SKWORL10' || code === 'SK10' || code === 'SUMMER10') {
+      const disc = Math.round(subtotal * 0.10);
+      setDiscountAmount(disc);
+      setFreeDeliveryApplied(false);
+      setAppliedPromo(code);
+      setPromoMessage({ type: 'success', text: `10% Discount Applied (-${formatPrice(disc)})` });
+    } else if (code === 'SKWORL20' || code === 'SK20' || code === 'BADOL20' || code === 'SUMMER20') {
+      const disc = Math.round(subtotal * 0.20);
+      setDiscountAmount(disc);
+      setFreeDeliveryApplied(false);
+      setAppliedPromo(code);
+      setPromoMessage({ type: 'success', text: `20% Discount Applied (-${formatPrice(disc)})` });
+    } else if (code === 'SUMMER30' || code === 'SK30') {
+      const disc = Math.round(subtotal * 0.30);
+      setDiscountAmount(disc);
+      setFreeDeliveryApplied(false);
+      setAppliedPromo(code);
+      setPromoMessage({ type: 'success', text: `30% Flash Sale Discount Applied (-${formatPrice(disc)})` });
+    } else if (code === 'BADOL100' || code === 'SK100') {
+      const disc = Math.min(subtotal, 100);
+      setDiscountAmount(disc);
+      setFreeDeliveryApplied(false);
+      setAppliedPromo(code);
+      setPromoMessage({ type: 'success', text: `৳100 Discount Coupon Applied!` });
+    } else if (code === 'FREESHIP' || code === 'FREE') {
+      setDiscountAmount(0);
+      setFreeDeliveryApplied(true);
+      setAppliedPromo(code);
+      setPromoMessage({ type: 'success', text: `Free Shipping Coupon Applied!` });
+    } else {
+      // General 10% promo code fallback for any promo code entered
+      const disc = Math.round(subtotal * 0.10);
+      setDiscountAmount(disc);
+      setFreeDeliveryApplied(false);
+      setAppliedPromo(code);
+      setPromoMessage({ type: 'success', text: `Special Promo Code "${code}" Applied (-${formatPrice(disc)})!` });
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setDiscountAmount(0);
+    setFreeDeliveryApplied(false);
+    setPromoInput('');
+    setPromoMessage(null);
+  };
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -308,6 +370,65 @@ export const CheckoutModal: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Promo Code / Coupon Section */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[10px] font-mono tracking-wider uppercase text-zinc-400 block font-bold">
+                    PROMO CODE / COUPON
+                  </label>
+                  {!appliedPromo ? (
+                    <div className="flex space-x-2">
+                      <div className="relative flex-1">
+                        <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                        <input
+                          type="text"
+                          value={promoInput}
+                          onChange={(e) => setPromoInput(e.target.value)}
+                          placeholder="Try SKWORL10, BADOL20, FREE..."
+                          className={`w-full font-mono text-xs pl-8 pr-3 py-2 border uppercase focus:outline-none transition-all ${
+                            isDark
+                              ? 'bg-zinc-900 border-white/20 text-white placeholder-zinc-500 focus:border-white'
+                              : 'bg-stone-50 border-zinc-300 text-black placeholder-zinc-400 focus:border-black'
+                          }`}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleApplyPromo}
+                        className={`px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider border transition-colors ${
+                          isDark
+                            ? 'bg-white text-black border-white hover:bg-zinc-200'
+                            : 'bg-black text-white border-black hover:bg-zinc-800'
+                        }`}
+                      >
+                        APPLY
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded text-xs font-mono">
+                      <div className="flex items-center space-x-2 text-emerald-400 font-bold">
+                        <Tag size={14} />
+                        <span>CODE: {appliedPromo}</span>
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded">
+                          APPLIED
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemovePromo}
+                        className="text-red-400 hover:text-red-300 text-xs font-bold underline ml-2"
+                      >
+                        REMOVE
+                      </button>
+                    </div>
+                  )}
+
+                  {promoMessage && !appliedPromo && (
+                    <p className={`text-[10px] font-mono ${promoMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {promoMessage.text}
+                    </p>
+                  )}
+                </div>
+
               </div>
 
               {/* Order Breakdown */}
@@ -318,9 +439,15 @@ export const CheckoutModal: React.FC = () => {
                   <span>SUBTOTAL:</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-500 font-bold">
+                    <span>PROMO DISCOUNT ({appliedPromo}):</span>
+                    <span>-{formatPrice(discountAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-zinc-400">
                   <span>DELIVERY CHARGE ({deliveryZone === 'inside_dhaka' ? 'DHAKA' : 'OUTSIDE DHAKA'}):</span>
-                  <span>{formatPrice(deliveryFee)}</span>
+                  <span>{freeDeliveryApplied ? 'FREE (PROMO)' : formatPrice(deliveryFee)}</span>
                 </div>
                 <div className="flex justify-between font-black text-sm pt-1 border-t border-zinc-500">
                   <span>TOTAL AMOUNT:</span>

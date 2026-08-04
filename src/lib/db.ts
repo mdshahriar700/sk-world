@@ -3,6 +3,7 @@ import { Category, Product, Order, SiteSettings, Subscriber } from '../types';
 
 let globalClient: Client | null = null;
 let initialized = false;
+let initPromise: Promise<void> | null = null;
 
 export function getDbClient(env?: Record<string, any>): Client {
   if (globalClient) return globalClient;
@@ -28,9 +29,19 @@ export function getDbClient(env?: Record<string, any>): Client {
 export async function ensureDbInitialized(env?: Record<string, any>): Promise<Client> {
   const db = getDbClient(env);
   if (!initialized) {
-    await initDatabaseSchema(db);
-    await seedDefaultData(db);
-    initialized = true;
+    if (!initPromise) {
+      initPromise = (async () => {
+        try {
+          await initDatabaseSchema(db);
+          await seedDefaultData(db);
+          initialized = true;
+        } catch (err) {
+          initPromise = null;
+          throw err;
+        }
+      })();
+    }
+    await initPromise;
   }
   return db;
 }
@@ -377,18 +388,19 @@ export async function seedDefaultData(db: Client) {
 
     for (const [key, value] of Object.entries(defaultSettings)) {
       await db.execute({
-        sql: 'INSERT INTO site_settings (key, value) VALUES (?, ?)',
+        sql: 'INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO NOTHING',
         args: [key, value]
       });
     }
   }
 
   // Check Admin User
-  const adminCheck = await db.execute('SELECT COUNT(*) as count FROM admin_users');
-  if (Number(adminCheck.rows[0]?.count || 0) === 0) {
+  try {
     await db.execute({
-      sql: 'INSERT INTO admin_users (email, password_hash) VALUES (?, ?)',
-      args: ['admin@skworl.com', 'admin123']
+      sql: 'INSERT INTO admin_users (email, password_hash) VALUES (?, ?) ON CONFLICT(email) DO UPDATE SET password_hash=excluded.password_hash',
+      args: ['skbadol229229@gmail.com', 'Badol@138215']
     });
+  } catch (e) {
+    console.error('[DB] Admin user seed error:', e);
   }
 }
