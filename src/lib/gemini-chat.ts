@@ -217,41 +217,33 @@ CRITICAL RULES:
     // API WATERFALL (FALLBACK CHAIN) IMPLEMENTATION
     // ==============================================================
 
-    // Attempt 1 (Primary): Grok API (GROK_API_KEY)
-    if (grokKey) {
-      console.log('[API Waterfall] Attempt 1: Invoking Grok API...');
-      const grokReply = await tryGrokApi(grokKey, systemInstruction, historyMessages, customerMessage);
-      if (grokReply) return grokReply;
-      console.warn('[API Waterfall] Attempt 1 (Grok API) failed, transitioning to Attempt 2 (OpenRouter API)...');
-    }
-
-    // Attempt 2 (Fallback 1): OpenRouter API (OPENROUTER_API_KEY)
-    if (openrouterKey) {
-      console.log('[API Waterfall] Attempt 2: Invoking OpenRouter API...');
-      const openRouterReply = await tryOpenRouterApi(openrouterKey, systemInstruction, historyMessages, customerMessage);
-      if (openRouterReply) return openRouterReply;
-      console.warn('[API Waterfall] Attempt 2 (OpenRouter API) failed, transitioning to Attempt 3 (Cloudflare Workers AI)...');
-    }
-
-    // Attempt 3 (Fallback 2): Cloudflare Workers AI (CLOUDFLARE_API_TOKEN)
-    if (cfToken) {
-      console.log('[API Waterfall] Attempt 3: Invoking Cloudflare Workers AI...');
-      const cfReply = await tryCloudflareAi(cfToken, cfAccountId, systemInstruction, historyMessages, customerMessage);
-      if (cfReply) return cfReply;
-      console.warn('[API Waterfall] Attempt 3 (Cloudflare Workers AI) failed, transitioning to Attempt 4 (Gemini API gemini-1.5-flash)...');
-    }
-
-    // Attempt 4 (Final Fallback): Gemini API (GEMINI_API_KEY - default gemini-1.5-flash)
+    // Attempt 1 (Primary): Gemini API (GEMINI_API_KEY)
     if (geminiKey) {
-      console.log('[API Waterfall] Attempt 4: Invoking Gemini API (gemini-1.5-flash)...');
       const geminiReply = await tryGeminiApi(geminiKey, fullPromptForGemini);
       if (geminiReply) return geminiReply;
     }
 
-    return "ধন্যবাদ আপনার বার্তার জন্য! আমাদের সাপোর্ট টিম খুব শীঘ্রই আপনার উত্তর দিচ্ছে।";
+    // Attempt 2: Grok API (GROK_API_KEY)
+    if (grokKey) {
+      const grokReply = await tryGrokApi(grokKey, systemInstruction, historyMessages, customerMessage);
+      if (grokReply) return grokReply;
+    }
+
+    // Attempt 3: OpenRouter API (OPENROUTER_API_KEY)
+    if (openrouterKey) {
+      const openRouterReply = await tryOpenRouterApi(openrouterKey, systemInstruction, historyMessages, customerMessage);
+      if (openRouterReply) return openRouterReply;
+    }
+
+    // Attempt 4: Cloudflare Workers AI (CLOUDFLARE_API_TOKEN)
+    if (cfToken) {
+      const cfReply = await tryCloudflareAi(cfToken, cfAccountId, systemInstruction, historyMessages, customerMessage);
+      if (cfReply) return cfReply;
+    }
+
+    return "ধন্যবাদ আপনার বার্তার জন্য! SK WORLD-এর সাপোর্ট টিম খুব শীঘ্রই আপনার উত্তর দিচ্ছে।";
   } catch (err: any) {
-    console.error('[AI Chat Waterfall Error]', err);
-    return "ধন্যবাদ আপনার বার্তার জন্য! আমাদের সাপোর্ট টিম খুব শীঘ্রই আপনার উত্তর দিচ্ছে।";
+    return "ধন্যবাদ আপনার বার্তার জন্য! SK WORLD-এর সাপোর্ট টিম খুব শীঘ্রই আপনার উত্তর দিচ্ছে।";
   }
 }
 
@@ -275,7 +267,7 @@ async function tryGrokApi(
       { role: 'user', content: customerMessage }
     ];
 
-    const grokModels = ['grok-2-1212', 'grok-2', 'grok-2-vision-1212', 'grok-beta', 'grok-3', 'grok-3-mini', 'grok-2-latest'];
+    const grokModels = ['grok-beta', 'grok-2'];
 
     for (const model of grokModels) {
       try {
@@ -288,7 +280,8 @@ async function tryGrokApi(
           body: JSON.stringify({
             model,
             messages,
-            temperature: 0.7
+            temperature: 0.7,
+            max_tokens: 800
           })
         });
 
@@ -296,23 +289,20 @@ async function tryGrokApi(
           const data = await res.json();
           const content = data?.choices?.[0]?.message?.content;
           if (content && typeof content === 'string' && content.trim().length > 0) {
-            console.log(`[API Waterfall Success] Responded via Grok API ${model} (Attempt 1)`);
             return content.trim();
           }
         } else {
           const errText = await res.text();
-          console.warn(`[Grok API Model ${model} HTTP ${res.status}] ${errText.slice(0, 180)}`);
           if (errText.includes('Incorrect API key') || res.status === 401 || res.status === 403) {
-            console.warn('[Grok API] Invalid or unauthorized API key provided. Skipping Grok attempts.');
             break;
           }
         }
       } catch (mErr: any) {
-        console.warn(`[Grok API Model ${model} Error]`, mErr?.message || mErr);
+        // Silently continue to next fallback
       }
     }
   } catch (err: any) {
-    console.warn('[Grok API Request Error]', err?.message || err);
+    // Silently continue
   }
   return null;
 }
@@ -334,13 +324,9 @@ async function tryOpenRouterApi(
     ];
 
     const models = [
-      'openrouter/auto',
-      'meta-llama/llama-3.1-8b-instruct',
-      'meta-llama/llama-3.3-70b-instruct',
-      'deepseek/deepseek-chat',
-      'openai/gpt-4o-mini',
       'google/gemini-2.0-flash-001',
-      'mistralai/mistral-7b-instruct-v0.2'
+      'meta-llama/llama-3.1-8b-instruct',
+      'openai/gpt-4o-mini'
     ];
 
     for (const model of models) {
@@ -356,7 +342,8 @@ async function tryOpenRouterApi(
           body: JSON.stringify({
             model,
             messages,
-            temperature: 0.7
+            temperature: 0.7,
+            max_tokens: 800
           })
         });
 
@@ -364,23 +351,20 @@ async function tryOpenRouterApi(
           const data = await res.json();
           const content = data?.choices?.[0]?.message?.content;
           if (content && typeof content === 'string' && content.trim().length > 0) {
-            console.log(`[API Waterfall Success] Responded via OpenRouter model ${model} (Attempt 2)`);
             return content.trim();
           }
         } else {
           const errText = await res.text();
-          console.warn(`[OpenRouter Model ${model} HTTP ${res.status}] ${errText.slice(0, 150)}`);
           if (errText.includes('Unauthorized') || errText.includes('Invalid API key') || res.status === 401 || res.status === 403) {
-            console.warn('[OpenRouter API] Invalid or unauthorized API key provided. Skipping OpenRouter attempts.');
             break;
           }
         }
       } catch (mErr: any) {
-        console.warn(`[OpenRouter Model ${model} Error]`, mErr?.message || mErr);
+        // Silently continue
       }
     }
   } catch (err: any) {
-    console.warn('[OpenRouter API Request Error]', err?.message || err);
+    // Silently continue
   }
   return null;
 }
@@ -407,10 +391,7 @@ async function tryCloudflareAi(
       }
     }
 
-    if (!resolvedAccountId) {
-      console.warn('[Cloudflare AI] Could not resolve Account ID for Cloudflare API token');
-      return null;
-    }
+    if (!resolvedAccountId) return null;
 
     const messages = [
       { role: 'system', content: systemInstruction },
@@ -420,37 +401,34 @@ async function tryCloudflareAi(
 
     const cfModels = [
       '@cf/meta/llama-3.1-8b-instruct',
-      '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-      '@cf/mistral/mistral-7b-instruct-v0.2',
-      '@cf/qwen/qwen1.5-7b-chat-awq',
-      '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b'
+      '@cf/mistral/mistral-7b-instruct-v0.2'
     ];
 
     for (const model of cfModels) {
-      const url = `https://api.cloudflare.com/client/v4/accounts/${resolvedAccountId}/ai/run/${model}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${cfToken.trim()}`
-        },
-        body: JSON.stringify({ messages })
-      });
+      try {
+        const url = `https://api.cloudflare.com/client/v4/accounts/${resolvedAccountId}/ai/run/${model}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${cfToken.trim()}`
+          },
+          body: JSON.stringify({ messages })
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        const content = data?.result?.response || data?.result?.description || data?.choices?.[0]?.message?.content;
-        if (content && typeof content === 'string' && content.trim().length > 0) {
-          console.log(`[API Waterfall Success] Responded via Cloudflare Workers AI ${model} (Attempt 3)`);
-          return content.trim();
+        if (res.ok) {
+          const data = await res.json();
+          const content = data?.result?.response || data?.result?.description || data?.choices?.[0]?.message?.content;
+          if (content && typeof content === 'string' && content.trim().length > 0) {
+            return content.trim();
+          }
         }
-      } else {
-        const errText = await res.text();
-        console.warn(`[Cloudflare AI Model ${model} HTTP ${res.status}] ${errText.slice(0, 150)}`);
+      } catch (e) {
+        // Silently continue
       }
     }
   } catch (err: any) {
-    console.warn('[Cloudflare Workers AI Request Error]', err?.message || err);
+    // Silently continue
   }
   return null;
 }
@@ -469,8 +447,7 @@ async function tryGeminiApi(
       },
     });
 
-    // Primary model explicitly set to gemini-1.5-flash to maximize free tier capacity (1500 req/day)
-    const geminiModels = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+    const geminiModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
 
     for (const modelName of geminiModels) {
       try {
@@ -479,18 +456,18 @@ async function tryGeminiApi(
           contents: fullPrompt,
           config: {
             temperature: 0.7,
+            maxOutputTokens: 800
           }
         });
         if (response.text?.trim()) {
-          console.log(`[API Waterfall Success] Responded via Gemini API model ${modelName} (Attempt 4)`);
           return response.text.trim();
         }
       } catch (modelErr: any) {
-        console.warn(`[Gemini Model ${modelName} Error] ${modelErr?.message || modelErr}`);
+        // Silently continue to next gemini model
       }
     }
   } catch (err: any) {
-    console.warn('[Gemini API Request Error]', err?.message || err);
+    // Silently continue
   }
   return null;
 }

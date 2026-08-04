@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '../types';
-import { X, ShoppingBag, ShieldCheck, Truck, Plus, Minus, CheckCircle } from 'lucide-react';
+import { X, ShoppingBag, ShieldCheck, Truck, Plus, Minus, CheckCircle, Share2, Link as LinkIcon, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { formatPrice } from '../lib/format';
 import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'motion/react';
+import { ImageMagnifier } from './ImageMagnifier';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -18,6 +19,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
   const [selectedSize, setSelectedSize] = useState<string>('M');
   const [selectedColor, setSelectedColor] = useState<string>('Black');
   const [quantity, setQuantity] = useState(1);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Sync default options when product changes
   useEffect(() => {
@@ -28,6 +30,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
       setSelectedSize(initialSizes[0] || '');
       setSelectedColor(initialColors[0] || '');
       setQuantity(1);
+      setCopiedLink(false);
     }
   }, [product]);
 
@@ -43,6 +46,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
 
   const isOutOfStock = product.stock_quantity <= 0;
   const currentImg = images[selectedImageIndex] || images[0];
+
+  const handleCopyProductLink = () => {
+    const slug = product.slug || `product-${product.id}`;
+    const directUrl = `${window.location.origin}/product/${slug}`;
+    navigator.clipboard.writeText(directUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+  };
 
   const handleSelectColor = (clr: string) => {
     setSelectedColor(clr);
@@ -111,19 +122,18 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-8 p-4 sm:p-8 max-h-[82vh] overflow-y-auto overflow-x-hidden">
             
-            {/* Left Column: Image Gallery */}
+            {/* Left Column: Image Gallery with Fabric Zoom Magnifier */}
             <div className="md:col-span-6 min-w-0 w-full space-y-3 sm:space-y-4">
               <div className={`w-full max-w-[280px] sm:max-w-full aspect-[3/4] border overflow-hidden relative mx-auto ${
                 isDark ? 'bg-zinc-900 border-white/20' : 'bg-stone-100 border-zinc-200'
               }`}>
-                <img
+                <ImageMagnifier
                   src={currentImg}
                   alt={product.name}
-                  draggable={false}
-                  className="w-full h-full object-cover object-top filter contrast-105 select-none"
+                  isDark={isDark}
                 />
                 {isOutOfStock && (
-                  <div className="absolute top-3 left-3 bg-red-600 text-white font-mono text-xs font-black uppercase px-2.5 py-1 tracking-widest">
+                  <div className="absolute top-3 left-3 z-20 bg-red-600 text-white font-mono text-xs font-black uppercase px-2.5 py-1 tracking-widest shadow-md">
                     SOLD OUT
                   </div>
                 )}
@@ -286,20 +296,37 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
               <div className={`space-y-3 pt-3 border-t ${
                 isDark ? 'border-white/10' : 'border-zinc-200'
               }`}>
-                <button
-                  onClick={handleAdd}
-                  disabled={isOutOfStock}
-                  className={`w-full py-3.5 font-mono text-xs font-black uppercase tracking-widest flex items-center justify-center space-x-2 transition-all shadow-md border ${
-                    isOutOfStock
-                      ? 'bg-zinc-800 text-zinc-500 border-zinc-700 cursor-not-allowed'
-                      : isDark
-                      ? 'bg-white text-black border-white hover:bg-zinc-200'
-                      : 'bg-black text-white border-black hover:bg-zinc-800'
-                  }`}
-                >
-                  <ShoppingBag size={17} />
-                  <span>{isOutOfStock ? 'OUT OF STOCK' : `ADD TO BAG — ${formatPrice(product.price * quantity)}`}</span>
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                  <button
+                    onClick={handleAdd}
+                    disabled={isOutOfStock}
+                    className={`sm:col-span-3 py-3.5 font-mono text-xs font-black uppercase tracking-widest flex items-center justify-center space-x-2 transition-all shadow-md border ${
+                      isOutOfStock
+                        ? 'bg-zinc-800 text-zinc-500 border-zinc-700 cursor-not-allowed'
+                        : isDark
+                        ? 'bg-white text-black border-white hover:bg-zinc-200'
+                        : 'bg-black text-white border-black hover:bg-zinc-800'
+                    }`}
+                  >
+                    <ShoppingBag size={17} />
+                    <span>{isOutOfStock ? 'OUT OF STOCK' : `ADD TO BAG — ${formatPrice(product.price * quantity)}`}</span>
+                  </button>
+
+                  <button
+                    onClick={handleCopyProductLink}
+                    className={`py-3.5 font-mono text-[10px] font-black uppercase tracking-wider flex items-center justify-center space-x-1 border transition-all ${
+                      copiedLink
+                        ? 'bg-emerald-600 text-white border-emerald-500'
+                        : isDark
+                        ? 'bg-zinc-900 text-zinc-300 border-white/20 hover:border-white hover:text-white'
+                        : 'bg-stone-100 text-zinc-700 border-zinc-300 hover:border-black hover:text-black'
+                    }`}
+                    title="Copy direct product link"
+                  >
+                    {copiedLink ? <Check size={14} /> : <LinkIcon size={14} />}
+                    <span>{copiedLink ? 'COPIED!' : 'SHARE'}</span>
+                  </button>
+                </div>
 
                 <div className={`grid grid-cols-2 gap-2 font-mono text-[9px] uppercase pt-2 border-t ${
                   isDark ? 'text-zinc-400 border-white/10' : 'text-zinc-500 border-zinc-200'

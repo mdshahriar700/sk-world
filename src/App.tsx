@@ -4,7 +4,8 @@ import { CartProvider } from './context/CartContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { Category, Product, Order, SiteSettings, Subscriber } from './types';
 
-// Public Components
+// Pages & Components
+import { ShopPage } from './pages/ShopPage';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoryQuickNav } from './components/CategoryQuickNav';
@@ -51,6 +52,12 @@ function MainStoreContent() {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
 
   // Navigation & UI State
+  const [currentView, setCurrentView] = useState<'home' | 'shop' | 'admin'>(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/admin') || window.location.hash === '#admin') return 'admin';
+    if (path.startsWith('/shop')) return 'shop';
+    return 'home';
+  });
   const [activeCategorySlug, setActiveCategorySlug] = useState<string | null>(null);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -64,16 +71,49 @@ function MainStoreContent() {
 
   const [loading, setLoading] = useState(true);
 
-  // Sync URL popstate & path changes
+  // Sync URL popstate & path changes (including /product/:slug and /shop)
   useEffect(() => {
     const handleLocationCheck = () => {
-      const isPathAdmin = window.location.pathname.startsWith('/admin') || window.location.hash === '#admin';
+      const path = window.location.pathname;
+      const isPathAdmin = path.startsWith('/admin') || window.location.hash === '#admin';
       setIsAdminView(isPathAdmin);
+
+      if (isPathAdmin) {
+        setCurrentView('admin');
+      } else if (path.startsWith('/shop')) {
+        setCurrentView('shop');
+      } else {
+        setCurrentView('home');
+      }
+
+      // Check product slug in URL
+      if (path.startsWith('/product/') && products.length > 0) {
+        const slug = path.replace('/product/', '').trim();
+        const found = products.find(
+          (p) => p.slug === slug || `product-${p.id}` === slug || String(p.id) === slug
+        );
+        if (found) {
+          setQuickViewProduct(found);
+        }
+      }
     };
 
     window.addEventListener('popstate', handleLocationCheck);
+    handleLocationCheck();
     return () => window.removeEventListener('popstate', handleLocationCheck);
-  }, []);
+  }, [products]);
+
+  // Handle opening product modal with slug URL update
+  const handleOpenProduct = (product: Product | null) => {
+    setQuickViewProduct(product);
+    if (product) {
+      const slug = product.slug || `product-${product.id}`;
+      window.history.pushState({}, '', `/product/${slug}`);
+    } else {
+      const backUrl = currentView === 'shop' ? '/shop' : '/';
+      window.history.pushState({}, '', backUrl);
+    }
+  };
 
   const handleExitAdmin = () => {
     if (window.location.pathname.startsWith('/admin') || window.location.hash === '#admin') {
@@ -133,11 +173,29 @@ function MainStoreContent() {
     }
   }, [settings.site_logo_url]);
 
+  const handleOpenShop = () => {
+    window.history.pushState({}, '', '/shop');
+    setCurrentView('shop');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenHome = () => {
+    window.history.pushState({}, '', '/');
+    setCurrentView('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSelectCategoryAndScroll = (slug: string | null) => {
     setActiveCategorySlug(slug);
-    const el = document.getElementById('newest-products-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+    if (currentView === 'shop') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const el = document.getElementById('newest-products-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        handleOpenShop();
+      }
     }
   };
 
@@ -220,96 +278,101 @@ function MainStoreContent() {
         onOpenAdmin={handleOpenAdmin}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenOrderTracking={() => setIsOrderTrackingOpen(true)}
+        onOpenShop={handleOpenShop}
+        isShopActive={currentView === 'shop'}
       />
 
-      {/* Hero Section */}
-      <Hero
-        settings={settings}
-        categories={categories}
-        onSelectCategory={handleSelectCategoryAndScroll}
-        onExploreClick={() => handleSelectCategoryAndScroll(null)}
-      />
-
-      {/* Category Quick Nav Index */}
-      <CategoryQuickNav
-        categories={categories}
-        onSelectCategory={handleSelectCategoryAndScroll}
-      />
-
-      {/* Ticker Marquee */}
-      <MarqueeBanner settings={settings} />
-
-      {/* Newest Products Section */}
-      <div id="newest-products-section">
-        <ProductGrid
-          title="NEWEST PRODUCTS"
-          subtitle="EXPLORE THE LATEST DROPS CRAFTED WITH UNCOMPROMISING PRECISION IN MILANO."
+      {currentView === 'shop' ? (
+        <ShopPage
           products={products}
           categories={categories}
           selectedCategorySlug={activeCategorySlug}
           onSelectCategory={setActiveCategorySlug}
-          onQuickView={setQuickViewProduct}
+          onSelectProduct={handleOpenProduct}
         />
-      </div>
+      ) : (
+        <>
+          {/* Hero Section */}
+          <Hero
+            settings={settings}
+            categories={categories}
+            onSelectCategory={handleSelectCategoryAndScroll}
+            onExploreClick={handleOpenShop}
+          />
 
-      {/* Sale Banner */}
-      <SaleBanner
-        settings={settings}
-        onExploreClick={() => {
-          const el = document.getElementById('newest-products-section');
-          el?.scrollIntoView({ behavior: 'smooth' });
-        }}
-      />
+          {/* Category Quick Nav Index */}
+          <CategoryQuickNav
+            categories={categories}
+            onSelectCategory={handleSelectCategoryAndScroll}
+          />
 
-      {/* Trending Collections Grid */}
-      {trendingProducts.length > 0 && (
-        <ProductGrid
-          title="TRENDING SELECTION"
-          subtitle="MOST WANTED ICONIC STREETWEAR SILHOUETTES OF THE SEASON."
-          products={trendingProducts}
-          categories={categories}
-          selectedCategorySlug={null}
-          onSelectCategory={() => {}}
-          onQuickView={setQuickViewProduct}
-        />
+          {/* Ticker Marquee */}
+          <MarqueeBanner settings={settings} />
+
+          {/* Newest Products Section */}
+          <div id="newest-products-section">
+            <ProductGrid
+              title="NEWEST PRODUCTS"
+              subtitle="EXPLORE THE LATEST DROPS CRAFTED WITH UNCOMPROMISING PRECISION IN MILANO."
+              products={products}
+              categories={categories}
+              selectedCategorySlug={activeCategorySlug}
+              onSelectCategory={setActiveCategorySlug}
+              onQuickView={handleOpenProduct}
+            />
+          </div>
+
+          {/* Sale Banner */}
+          <SaleBanner
+            settings={settings}
+            onExploreClick={handleOpenShop}
+          />
+
+          {/* Trending Collections Grid */}
+          {trendingProducts.length > 0 && (
+            <ProductGrid
+              title="TRENDING SELECTION"
+              subtitle="MOST WANTED ICONIC STREETWEAR SILHOUETTES OF THE SEASON."
+              products={trendingProducts}
+              categories={categories}
+              selectedCategorySlug={null}
+              onSelectCategory={() => {}}
+              onQuickView={handleOpenProduct}
+            />
+          )}
+
+          {/* Editable Feature Blocks */}
+          <FeatureBlocks
+            settings={settings}
+            onExploreClick={handleOpenShop}
+          />
+
+          {/* Customer Testimonials Section */}
+          <Testimonials />
+
+          {/* Tilted Beige Band with perspective distortion */}
+          <TiltedBeigeBand />
+
+          {/* Newsletter Signup */}
+          <Newsletter settings={settings} />
+        </>
       )}
-
-      {/* Editable Feature Blocks */}
-      <FeatureBlocks
-        settings={settings}
-        onExploreClick={() => {
-          const el = document.getElementById('newest-products-section');
-          el?.scrollIntoView({ behavior: 'smooth' });
-        }}
-      />
-
-      {/* Customer Testimonials Section */}
-      <Testimonials />
-
-      {/* Tilted Beige Band with perspective distortion */}
-      <TiltedBeigeBand />
-
-      {/* Newsletter Signup */}
-      <Newsletter settings={settings} />
 
       {/* Editorial Footer */}
       <Footer
         categories={categories}
         settings={settings}
-        onSelectCategory={setActiveCategorySlug}
+        onSelectCategory={(slug) => {
+          setActiveCategorySlug(slug);
+          handleOpenShop();
+        }}
         onOpenAdmin={handleOpenAdmin}
       />
 
       {/* Bottom Sticky Mobile Navigation Bar */}
       <BottomNavbar
-        onHomeClick={() => {
-          setActiveCategorySlug(null);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        onCollectionsClick={() => {
-          const el = document.getElementById('newest-products-section');
-          el?.scrollIntoView({ behavior: 'smooth' });
-        }}
+        onHomeClick={handleOpenHome}
+        onCollectionsClick={handleOpenShop}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenOrderTracking={() => setIsOrderTrackingOpen(true)}
       />
@@ -325,22 +388,19 @@ function MainStoreContent() {
       />
       <OfferPopupModal
         settings={settings}
-        onExploreClick={() => {
-          const el = document.getElementById('newest-products-section');
-          el?.scrollIntoView({ behavior: 'smooth' });
-        }}
+        onExploreClick={handleOpenShop}
       />
       <CartDrawer />
       <CheckoutModal />
       <ProductDetailModal
         product={quickViewProduct}
-        onClose={() => setQuickViewProduct(null)}
+        onClose={() => handleOpenProduct(null)}
       />
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         products={products}
-        onSelectProduct={setQuickViewProduct}
+        onSelectProduct={handleOpenProduct}
       />
     </div>
   );

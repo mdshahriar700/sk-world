@@ -12,6 +12,8 @@ interface NavbarProps {
   onOpenAdmin: () => void;
   onOpenSearch: () => void;
   onOpenOrderTracking?: () => void;
+  onOpenShop?: () => void;
+  isShopActive?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -21,6 +23,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectCategory,
   onOpenSearch,
   onOpenOrderTracking,
+  onOpenShop,
+  isShopActive,
 }) => {
   const { setIsCartOpen, cartCount } = useCart();
   const { theme, toggleTheme } = useTheme();
@@ -98,10 +102,23 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Center Nav Links (Desktop) */}
         <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 text-xs font-bold tracking-widest uppercase font-mono">
+          {onOpenShop && (
+            <button
+              onClick={onOpenShop}
+              className={`transition-colors py-1 border-b-2 font-black ${
+                isShopActive
+                  ? isDark ? 'border-white text-white' : 'border-black text-black'
+                  : isDark ? 'border-transparent text-amber-400 hover:text-white' : 'border-transparent text-amber-600 hover:text-black'
+              }`}
+            >
+              SHOP PAGE
+            </button>
+          )}
+
           <button
             onClick={() => onSelectCategory(null)}
             className={`transition-colors py-1 border-b-2 ${
-              activeCategory === null
+              activeCategory === null && !isShopActive
                 ? isDark ? 'border-white text-white font-black' : 'border-black text-black font-black'
                 : isDark ? 'border-transparent text-zinc-400 hover:text-white' : 'border-transparent text-zinc-500 hover:text-black'
             }`}
@@ -195,6 +212,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           }`}>
             01 / NAVIGATION
           </div>
+          {onOpenShop && (
+            <button
+              onClick={() => {
+                onOpenShop();
+                setMobileMenuOpen(false);
+              }}
+              className={`block w-full text-left py-2 font-syne font-black text-sm tracking-wider uppercase border-b text-amber-500 ${
+                isDark ? 'border-white/10' : 'border-zinc-200'
+              }`}
+            >
+              ★ Full Shop Page & Filters
+            </button>
+          )}
           <button
             onClick={() => {
               onSelectCategory(null);
