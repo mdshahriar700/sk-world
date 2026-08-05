@@ -171,7 +171,24 @@ export const LiveChatWidget: React.FC = () => {
           message: messageText
         })
       });
-      await res.json();
+      const resData = await res.json();
+      if (resData && resData.ai_reply) {
+        const aiMsg: ChatMessage = {
+          id: Date.now() + 1,
+          session_id: sessionId,
+          sender_type: 'admin',
+          sender_name: 'SK WORLD AI Assistant',
+          message: resData.ai_reply,
+          is_read: true,
+          created_at: new Date().toISOString()
+        };
+        setMessages((prev) => {
+          // Check if message already exists to avoid duplicate
+          const exists = prev.some((m) => m.sender_type === 'admin' && m.message === resData.ai_reply);
+          if (exists) return prev;
+          return [...prev, aiMsg];
+        });
+      }
       await fetchMessages();
       shouldAutoScrollRef.current = true;
       scrollToBottom(true);
