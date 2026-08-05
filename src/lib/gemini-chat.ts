@@ -14,11 +14,13 @@ export async function generateGeminiChatReply(
   const openrouterKey = env?.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY;
   const cfToken = env?.CLOUDFLARE_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN;
   const cfAccountId = env?.CLOUDFLARE_ACCOUNT_ID || process.env.CLOUDFLARE_ACCOUNT_ID;
+  
+  // Prefer standard GEMINI_API_KEY, fallback to MY_GEMINI_API_KEY
   const geminiKey =
-    env?.MY_GEMINI_API_KEY ||
     env?.GEMINI_API_KEY ||
-    process.env.MY_GEMINI_API_KEY ||
-    process.env.GEMINI_API_KEY;
+    process.env.GEMINI_API_KEY ||
+    env?.MY_GEMINI_API_KEY ||
+    process.env.MY_GEMINI_API_KEY;
 
   if (!grokKey && !openrouterKey && !cfToken && !geminiKey) {
     console.warn('[AI Chat Waterfall] No API Keys available in server environment variables.');
@@ -267,8 +269,40 @@ async function tryGrokApi(
       { role: 'user', content: customerMessage }
     ];
 
-    const grokModels = ['grok-beta', 'grok-2'];
+    // If key starts with gsk_, it's a Groq API key (console.groq.com)
+    if (cleanKey.startsWith('gsk_')) {
+      const groqModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'];
+      for (const model of groqModels) {
+        try {
+          const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${cleanKey}`
+            },
+            body: JSON.stringify({
+              model,
+              messages,
+              temperature: 0.7,
+              max_tokens: 800
+            })
+          });
 
+          if (res.ok) {
+            const data = await res.json();
+            const content = data?.choices?.[0]?.message?.content;
+            if (content && typeof content === 'string' && content.trim().length > 0) {
+              return content.trim();
+            }
+          }
+        } catch (e) {
+          // Continue to next model
+        }
+      }
+    }
+
+    // Try xAI Grok Endpoint (api.x.ai)
+    const grokModels = ['grok-beta', 'grok-2'];
     for (const model of grokModels) {
       try {
         const res = await fetch('https://api.x.ai/v1/chat/completions', {
@@ -290,11 +324,6 @@ async function tryGrokApi(
           const content = data?.choices?.[0]?.message?.content;
           if (content && typeof content === 'string' && content.trim().length > 0) {
             return content.trim();
-          }
-        } else {
-          const errText = await res.text();
-          if (errText.includes('Incorrect API key') || res.status === 401 || res.status === 403) {
-            break;
           }
         }
       } catch (mErr: any) {
@@ -325,8 +354,11 @@ async function tryOpenRouterApi(
 
     const models = [
       'google/gemini-2.0-flash-001',
+      'meta-llama/llama-3.3-70b-instruct:free',
+      'meta-llama/llama-3.1-8b-instruct:free',
       'meta-llama/llama-3.1-8b-instruct',
-      'openai/gpt-4o-mini'
+      'openai/gpt-4o-mini',
+      'openrouter/auto'
     ];
 
     for (const model of models) {
@@ -352,11 +384,6 @@ async function tryOpenRouterApi(
           const content = data?.choices?.[0]?.message?.content;
           if (content && typeof content === 'string' && content.trim().length > 0) {
             return content.trim();
-          }
-        } else {
-          const errText = await res.text();
-          if (errText.includes('Unauthorized') || errText.includes('Invalid API key') || res.status === 401 || res.status === 403) {
-            break;
           }
         }
       } catch (mErr: any) {
@@ -437,37 +464,43 @@ async function tryGeminiApi(
   geminiKey: string,
   fullPrompt: string
 ): Promise<string | null> {
-  try {
-    const ai = new GoogleGenAI({
-      apiKey: geminiKey.trim(),
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
+  const keysToTry = [geminiKey, process.env.GEMINI_API_KEY].filter(
+    (k): k is string => Boolean(k && k.trim().length > 10)
+  );
+
+  const geminiModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+
+  for (const key of keysToTry) {
+    try {
+      const ai = new GoogleGenAI({
+        apiKey: key.trim(),
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          },
         },
-      },
-    });
+      });
 
-    const geminiModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-
-    for (const modelName of geminiModels) {
-      try {
-        const response = await ai.models.generateContent({
-          model: modelName,
-          contents: fullPrompt,
-          config: {
-            temperature: 0.7,
-            maxOutputTokens: 800
+      for (const modelName of geminiModels) {
+        try {
+          const response = await ai.models.generateContent({
+            model: modelName,
+            contents: fullPrompt,
+            config: {
+              temperature: 0.7,
+              maxOutputTokens: 800
+            }
+          });
+          if (response.text?.trim()) {
+            return response.text.trim();
           }
-        });
-        if (response.text?.trim()) {
-          return response.text.trim();
+        } catch (modelErr: any) {
+          // Silently continue to next gemini model
         }
-      } catch (modelErr: any) {
-        // Silently continue to next gemini model
       }
+    } catch (err: any) {
+      // Silently try next key
     }
-  } catch (err: any) {
-    // Silently continue
   }
   return null;
 }
