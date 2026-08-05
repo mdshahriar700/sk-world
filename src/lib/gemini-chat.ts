@@ -220,12 +220,17 @@ function buildSmartDatabaseAnswer(
     return `SK WORLD-এর ডেলিভারি চার্জ:\n\n• ঢাকা সিটির ভেতরে: ৳${delDhaka}\n• ঢাকা সিটির বাইরে: ৳${delOutside}\n\nআমরা সারা বাংলাদেশে ক্যাশ অন ডেলিভারি (COD) সুবিধা দিচ্ছি। আপনার পছন্দের প্রোডাক্টটি অর্ডার করতে শপ সেকশন ভিজিট করুন! 🛍️`;
   }
 
-  // 2. Greeting
+  // 2. Size & Exchange policy query
+  if (/size|exchange|return|measurement|সাইজ|মেজারমেন্ট|রিটার্ন|চেঞ্জ|পাল্টানো/i.test(msg)) {
+    return `SK WORLD-এর এক্সচেঞ্জ পলিসি & সাইজ গাইড:\n\n• সাইজ সংক্রান্ত সমস্যায় প্রোডাক্ট পাওয়ার ৭ দিনের মধ্যে সহজ এক্সচেঞ্জ সুবিধা পাবেন।\n• শুধুমাত্র আন-ওয়ার্ন (অব্যবহৃত) অবস্থায় প্রোডাক্ট রিটার্ন বা সাইজ সোয়াপ করা যাবে।\n\nসাহায্যের জন্য হেল্পলাইনে যোগাযোগ করুন: ${adminPhone}`;
+  }
+
+  // 3. Greeting
   if (/^(hello|hi|hey|سلام|আসসালামু|আসসালামু আলাইকুম|হ্যালো|হাই)/i.test(lower) && msg.length < 25) {
     return `আসসালামু আলাইকুম ${customerName ? customerName : ''}! SK WORLD-এ আপনাকে স্বাগতম। 🌟\n\nপ্রোডাক্ট কালেকশন, দাম, সাইজ বা অর্ডার ট্র্যাকিং সংক্রান্ত যেকোনো প্রশ্ন আমাদের করুন।`;
   }
 
-  // 3. Order Tracking query
+  // 4. Order Tracking query
   if (/order|track|status|অর্ডার|ট্র্যাক|অবস্থা|আইডি/i.test(msg) || orders.length > 0) {
     if (orders.length > 0) {
       const o = orders[0];
@@ -241,19 +246,14 @@ function buildSmartDatabaseAnswer(
     return `আপনার অর্ডার সম্পর্কিত তথ্য জানতে আপনার মোবাইল নম্বর অথবা অর্ডার আইডিটি মেসেজে লিখুন। আমরা সাথে সাথেই তথ্য জানিয়ে দিচ্ছি! 📦`;
   }
 
-  // 4. Products / Prices / Catalog query
-  if (/product|item|hoodie|shirt|jacket|price|cost|size|stock|collection|দাম|সাইজ|স্টক|পণ্য|কালেকশন|টিশার্ট|হালকা/i.test(msg) || products.length > 0) {
+  // 5. Products / Prices / Catalog query
+  if (/product|item|hoodie|shirt|jacket|price|cost|stock|collection|দাম|সাইজ|স্টক|পণ্য|কালেকশন|টিশার্ট|হালকা/i.test(msg)) {
     if (products.length > 0) {
       const top4 = products.slice(0, 4);
       const itemsFormatted = top4.map(p => `• ${p.name} - ${p.price} (${p.stock})`).join('\n');
       return `আমাদের বর্তমান জনপ্রিয় কালেকশন ও দাম:\n\n${itemsFormatted}\n\nসম্পূর্ণ কালেকশন দেখতে ওয়েবসাইট শপ পেইজ ভিজিট করুন অথবা আপনার কাঙ্ক্ষিত প্রোডাক্টটির নাম লিখে মেসেজ করুন! ✨`;
     }
     return `আমাদের শপে প্রিমিয়াম ৪০GSM হেভিওয়েট হুডি, বক্সি ফিট টিশার্ট এবং জ্যাকেট কালেকশন এভেলেবল আছে। অনুগ্রহ করে নির্দিষ্ট প্রোডাক্টের নাম লিখুন অথবা শপ পেজ দেখুন।`;
-  }
-
-  // 5. Size & Exchange policy query
-  if (/size|exchange|return|সাইজ|রিটার্ন|চেঞ্জ|পাল্টানো/i.test(msg)) {
-    return `SK WORLD-এর এক্সচেঞ্জ পলিসি:\n\n• সাইজ সংক্রান্ত সমস্যায় প্রোডাক্ট পাওয়ার ৭ দিনের মধ্যে সহজ এক্সচেঞ্জ সুবিধা পাবেন।\n• শুধুমাত্র আন-ওয়ার্ন (অব্যবহৃত) অবস্থায় প্রোডাক্ট রিটার্ন বা সাইজ সোয়াপ করা যাবে।\n\nসাহায্যের জন্য হেল্পলাইনে যোগাযোগ করুন: ${adminPhone}`;
   }
 
   // 6. Contact & Helpline query
@@ -270,8 +270,9 @@ function buildSmartDatabaseAnswer(
 // ----------------------------------------------------------------------
 
 async function tryGeminiApi(apiKey: string, prompt: string): Promise<string | null> {
+  const cleanKey = apiKey.trim();
   try {
-    const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
+    const ai = new GoogleGenAI({ apiKey: cleanKey });
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash',
       contents: prompt,
@@ -279,15 +280,21 @@ async function tryGeminiApi(apiKey: string, prompt: string): Promise<string | nu
     });
     if (response.text?.trim()) return response.text.trim();
   } catch (e) {
-    // Try fallback gemini model
     try {
-      const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
-      const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: prompt,
-        config: { temperature: 0.7, maxOutputTokens: 500 }
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${cleanKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
+        }),
+        signal: AbortSignal.timeout(3000)
       });
-      if (response.text?.trim()) return response.text.trim();
+      if (res.ok) {
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text?.trim()) return text.trim();
+      }
     } catch (err) {}
   }
   return null;
